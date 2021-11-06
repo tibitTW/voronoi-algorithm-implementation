@@ -20,13 +20,16 @@ main_canvas.grid(column=0, row=0)
 sideframe = ttk.Frame(root, padding="10 10 10 10")
 sideframe.grid(column=1, row=0)
 
+fileframe = ttk.Frame(sideframe)
+fileframe.grid(column=0, row=0)
+
 file_path = StringVar()
-file_name_lb = ttk.Label(sideframe, textvariable=file_path)
+file_name_lb = ttk.Label(fileframe, textvariable=file_path)
 read_file_btn = ttk.Button(
-    sideframe, width=16, text="open file", command=lambda: fp.open_file(file_path)
+    fileframe, width=16, text="open file", command=lambda: fp.open_file(file_path)
 )
 output_file_btn = ttk.Button(
-    sideframe, width=16, text="save result to file", command=None
+    fileframe, width=16, text="save result to file", command=None
 )
 # TODO : command
 show_graph_btn = ttk.Button(sideframe, width=16, text="show graph", command=None)
