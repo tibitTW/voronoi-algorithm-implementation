@@ -31,10 +31,10 @@ read_file_btn = ttk.Button(
 output_file_btn = ttk.Button(
     fileframe, width=16, text="save result to file", command=None
 )
-# TODO : command
+
+# TODO : commands
 show_graph_btn = ttk.Button(sideframe, width=16, text="show graph", command=None)
 show_result_btn = ttk.Button(sideframe, width=16, text="show result", command=None)
-
 next_step_btn = ttk.Button(sideframe, width=16, text="run next step", command=None)
 clear_canvas_btn = ttk.Button(sideframe, width=16, text="clear canvas", command=None)
 
