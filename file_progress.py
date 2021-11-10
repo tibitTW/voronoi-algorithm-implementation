@@ -26,7 +26,6 @@ def open_file(display_lb_text=None):
             try:
                 # 讀一組測試資料
                 line = data[i].split(" ")
-                print(line)
                 if len(line) == 1:
                     print("test data size:", line[0])
                     # read EOF
