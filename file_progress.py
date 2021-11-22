@@ -6,7 +6,7 @@ def open_file(display_lb_text=None):
     filetypes = {("input files", "*.in"), ("All files", "*.*")}
     filename = fd.askopenfilename(title="選取檔案", initialdir="./", filetypes=filetypes)
     if display_lb_text:
-        display_lb_text.set("opening file: " + filename.split("/")[-1])
+        display_lb_text.set("using file:\n" + filename.split("/")[-1])
 
     with open(filename, "r") as f:
         data = f.read()
