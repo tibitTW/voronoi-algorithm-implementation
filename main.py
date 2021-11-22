@@ -12,8 +12,14 @@ root.title("Voronoi")
 mainframe = ttk.Frame(root, padding="10 10 10 10")
 mainframe.grid(column=0, row=0)
 
+# canvas click event
+def callback(event):
+    print(f"click at ({event.x}, {event.y})")
+
+
 # 畫圖區域
 main_canvas = Canvas(mainframe, width=600, height=600, background="black")
+main_canvas.bind("<Button-1>", callback)
 main_canvas.grid(column=0, row=0)
 
 # 放按鈕的容器
