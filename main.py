@@ -5,10 +5,6 @@ from tkinter import ttk
 
 import file_progress as fp
 
-# canvas click event
-def callback(event):
-    print(f"click at ({event.x}, {event.y})")
-
 
 class sc:
     def __init__(self) -> None:
@@ -22,7 +18,7 @@ class sc:
 
         # main canvas
         self.canvas = Canvas(self.mainframe, width=600, height=600, background="white")
-        self.canvas.bind("<Button-1>", callback)
+        self.canvas.bind("<Button-1>", self.mouse_click_event)
         self.canvas.grid(column=0, row=0)
 
         # frame of buttons
@@ -41,7 +37,7 @@ class sc:
         self.show_result_btn = ttk.Button(self.sideframe, width=16, text="run", command=None)  # TODO : commands
         self.output_graph_file_btn = ttk.Button(self.sideframe, width=16, text="save image", command=None)  # TODO : commands
         self.read_graph_file_btn = ttk.Button(self.sideframe, width=16, text="read image", command=None)  # TODO : commands
-        self.clear_canvas_btn = ttk.Button(self.sideframe, width=16, text="clear canvas", command=None)  # TODO : commands
+        self.clear_canvas_btn = ttk.Button(self.sideframe, width=16, text="clear canvas", command=self.clean_canvas)
 
     # initialize sideframe layout
     def _init_sideframe_layout(self):
@@ -60,13 +56,16 @@ class sc:
     def clean_canvas(self):
         self.canvas.delete("all")
 
+    def mouse_click_event(self, event):
+        print(f"click at ({event.x}, {event.y})")
+        self.print_point(event.x, event.y)
+
     def print_point(self, x, y, r=3):
         self.canvas.create_oval(x - r, y - r, x + r, y + r)
 
 
 if __name__ == "__main__":
     main_sc = sc()
-    main_sc.print_point(30, 30)
     main_sc.mainloop()
 
 
