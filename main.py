@@ -43,7 +43,7 @@ class sc:
         self.run_btn = ttk.Button(self.sideframe, width=16, text="run", command=self.do_voronoi)
         self.write_graph_file_btn = ttk.Button(self.sideframe, width=16, text="save image", command=self.save_graph)
         self.read_graph_file_btn = ttk.Button(self.sideframe, width=16, text="read image", command=self.read_graph)
-        self.clear_canvas_btn = ttk.Button(self.sideframe, width=16, text="clear canvas", command=self.clean_canvas)
+        self.clear_canvas_btn = ttk.Button(self.sideframe, width=16, text="clear canvas", command=self.clean)
 
     def init_sideframe_layout(self):
         self.file_name_lb.grid(row=0)
@@ -100,6 +100,13 @@ class sc:
             self.print_line(x1, y1, x2, y2)
 
     ######################## others ########################
+    def clean(self):
+        self.clean_canvas()
+        self.clear_contents()
+
+    def clear_contents(self):
+        self.graph_contents = {"points": [], "lines": []}
+
     def show_next_set(self):
         self.dataset_idx += 1
         if self.dataset_idx < len(self.dataset):
@@ -109,16 +116,19 @@ class sc:
         else:
             self.dataset_idx = -1
             self.clean_canvas()
-            self.graph_contents = {"points": [], "lines": []}
+            self.clear_contents()
 
-    # TODO : 寫成 divide & conquer 解法
+    # TODO: 寫成 divide & conquer 解法
     def do_voronoi(self):
         if len(self.graph_contents["points"]) == 1:
             return
+        # TODO: 優化
         elif len(self.graph_contents["points"]) == 2:
-            # TODO : 畫中垂線
-            pass
-        else:
+            p1, p2 = self.graph_contents["points"]
+            fx = get_bisection(p1, p2)
+            self.print_line(0, fx.get_val(0), 600, fx.get_val(600))
+
+        elif len(self.graph_contents["points"]) == 3:
             if "三點共線":
                 self.graph_contents["points"].sort()
                 p1, p2, p3 = self.graph_contents["points"]
@@ -130,6 +140,8 @@ class sc:
                 # TODO: 3. 找中垂線相交點
                 # TODO: 4. 找相交點 & ac中垂線
                 pass
+        else:
+            print("TODO: solve problems using more than 3 points.")
 
 
 if __name__ == "__main__":
