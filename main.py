@@ -4,6 +4,7 @@ from tkinter import *
 from tkinter import ttk
 
 import file_process as fp
+from tools import *
 
 
 class sc:
@@ -32,19 +33,18 @@ class sc:
         self.dataset = []
         self.dataset_idx = -1
 
-    # initialize labels and buttons in sideframe
+    #################### core functions ####################
     def init_sideframe_elements(self):
         self.file_path = StringVar()
         self.file_name_lb = ttk.Label(self.sideframe, textvariable=self.file_path)
         self.read_file_btn = ttk.Button(self.sideframe, width=16, text="read file", command=self.read_dataset)
         self.next_set_btn = ttk.Button(self.sideframe, width=16, text="next set", command=self.show_next_set)
         self.step_by_step_btn = ttk.Button(self.sideframe, width=16, text="step by step", command=None)  # TODO : commands
-        self.run_btn = ttk.Button(self.sideframe, width=16, text="run", command=None)  # TODO : commands
+        self.run_btn = ttk.Button(self.sideframe, width=16, text="run", command=self.do_voronoi)
         self.write_graph_file_btn = ttk.Button(self.sideframe, width=16, text="save image", command=self.save_graph)
         self.read_graph_file_btn = ttk.Button(self.sideframe, width=16, text="read image", command=self.read_graph)
         self.clear_canvas_btn = ttk.Button(self.sideframe, width=16, text="clear canvas", command=self.clean_canvas)
 
-    # initialize sideframe layout
     def init_sideframe_layout(self):
         self.file_name_lb.grid(row=0)
         self.read_file_btn.grid(row=1)
@@ -62,19 +62,14 @@ class sc:
     def mainloop(self):
         self.root.mainloop()
 
+    #################### file processing ####################
     def read_dataset(self):
         self.dataset = fp.open_in_file(self.file_path)
 
-    def show_next_set(self):
-        self.dataset_idx += 1
-        if self.dataset_idx < len(self.dataset):
-            self.graph_contents = self.dataset[self.dataset_idx]
-            self.clean_canvas()
-            self.print_graph(self.graph_contents)
-        else:
-            self.dataset_idx = -1
-            self.clean_canvas()
-            self.graph_contents = {"points": [], "lines": []}
+    def save_graph(self):
+        self.graph_contents["points"].sort()
+        self.graph_contents["lines"].sort()
+        fp.save_vd_file(self.graph_contents)
 
     def read_graph(self):
         # read file
@@ -83,6 +78,7 @@ class sc:
         self.graph_contents["lines"] = graph_content["lines"]
         self.print_graph(graph_content)
 
+    ####################### draw graph ######################
     def clean_canvas(self):
         self.canvas.delete("all")
 
@@ -103,10 +99,37 @@ class sc:
         for x1, y1, x2, y2 in lines:
             self.print_line(x1, y1, x2, y2)
 
-    def save_graph(self):
-        self.graph_contents["points"].sort()
-        self.graph_contents["lines"].sort()
-        fp.save_vd_file(self.graph_contents)
+    ######################## others ########################
+    def show_next_set(self):
+        self.dataset_idx += 1
+        if self.dataset_idx < len(self.dataset):
+            self.graph_contents = self.dataset[self.dataset_idx]
+            self.clean_canvas()
+            self.print_graph(self.graph_contents)
+        else:
+            self.dataset_idx = -1
+            self.clean_canvas()
+            self.graph_contents = {"points": [], "lines": []}
+
+    # TODO : 寫成 divide & conquer 解法
+    def do_voronoi(self):
+        if len(self.graph_contents["points"]) == 1:
+            return
+        elif len(self.graph_contents["points"]) == 2:
+            # TODO : 畫中垂線
+            pass
+        else:
+            if "三點共線":
+                self.graph_contents["points"].sort()
+                p1, p2, p3 = self.graph_contents["points"]
+                # TODO: 2. 做p1 p2中垂線
+                # TODO: 3. 做p2 p3中垂線
+            else:
+                # TODO: 1. 找ab中垂線
+                # TODO: 2. 找bc中垂線
+                # TODO: 3. 找中垂線相交點
+                # TODO: 4. 找相交點 & ac中垂線
+                pass
 
 
 if __name__ == "__main__":
