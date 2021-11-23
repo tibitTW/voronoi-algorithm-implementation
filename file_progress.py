@@ -1,7 +1,7 @@
 from tkinter import filedialog as fd
 
 # 開測資
-def open_file(display_lb_text=None):
+def open_in_file(display_lb_text=None):
 
     filetypes = {("input files", "*.in"), ("All files", "*.*")}
     filename = fd.askopenfilename(title="選取檔案", initialdir="./", filetypes=filetypes)

@@ -34,7 +34,7 @@ class sc:
     def _init_sideframe_elements(self):
         self.file_path = StringVar()
         self.file_name_lb = ttk.Label(self.sideframe, textvariable=self.file_path)
-        self.read_file_btn = ttk.Button(self.sideframe, width=16, text="read file", command=lambda: fp.open_file(self.file_path))
+        self.read_file_btn = ttk.Button(self.sideframe, width=16, text="read file", command=lambda: fp.open_in_file(self.file_path))
         self.show_graph_btn = ttk.Button(self.sideframe, width=16, text="next set", command=None)  # TODO : commands
         self.next_step_btn = ttk.Button(self.sideframe, width=16, text="step by step", command=None)  # TODO : commands
         self.show_result_btn = ttk.Button(self.sideframe, width=16, text="run", command=None)  # TODO : commands
