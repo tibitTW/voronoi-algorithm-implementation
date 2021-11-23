@@ -1,8 +1,7 @@
-"""檔案處理相關 module"""
+"""檔案處理相關 function"""
 
 from tkinter import filedialog as fd
 
-# TODO : return datasets
 # 開測資
 def open_in_file(display_lb_text=None) -> list:
 
