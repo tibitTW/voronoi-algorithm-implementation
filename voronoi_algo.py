@@ -1,15 +1,7 @@
 #%%
-import numpy as np
 import matplotlib.pyplot as plt
 
 from tools import *
-
-# %%
-def f(x):
-    return -x + 500
-
-
-#%%
 
 # %%
 p1 = P(100, 300)
