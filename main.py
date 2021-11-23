@@ -5,6 +5,10 @@ from tkinter import ttk
 
 import file_progress as fp
 
+# canvas click event
+def callback(event):
+    print(f"click at ({event.x}, {event.y})")
+
 
 class sc:
     def __init__(self) -> None:
@@ -18,6 +22,7 @@ class sc:
 
         # main canvas
         self.canvas = Canvas(self.mainframe, width=600, height=600, background="white")
+        self.canvas.bind("<Button-1>", callback)
         self.canvas.grid(column=0, row=0)
 
         # frame of buttons
