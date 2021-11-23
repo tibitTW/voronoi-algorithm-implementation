@@ -27,6 +27,9 @@ class sc:
         self._init_sideframe_elements()
         self._init_sideframe_layout()
 
+        # record points
+        self.points = []
+
     # initialize labels and buttons in sideframe
     def _init_sideframe_elements(self):
         self.file_path = StringVar()
@@ -57,8 +60,9 @@ class sc:
         self.canvas.delete("all")
 
     def mouse_click_event(self, event):
-        print(f"click at ({event.x}, {event.y})")
+        self.points.append((event.x, event.y))
         self.print_point(event.x, event.y)
+        print(f"click at ({event.x}, {event.y})")
 
     def print_point(self, x, y, r=3):
         self.canvas.create_oval(x - r, y - r, x + r, y + r)
