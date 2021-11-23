@@ -52,10 +52,18 @@ class sc:
     def mainloop(self):
         self.root.mainloop()
 
+    def clean_canvas(self):
+        self.canvas.delete("all")
+
+    def print_point(self, x, y, r=3):
+        self.canvas.create_oval(x - r, y - r, x + r, y + r)
+
 
 if __name__ == "__main__":
     main_sc = sc()
+    main_sc.print_point(30, 30)
     main_sc.mainloop()
+
 
 # test
 # main_canvas.create_line(10, 5, 200, 50)
