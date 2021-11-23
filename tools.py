@@ -115,12 +115,27 @@ class F:
     def get_val(self, x):
         return self._a * x + self._b
 
+    def get_x_val(self, y):
+        return (y - self.b) / self.a
+
 
 # 找中垂線
-def get_bisection(p1: P, p2: P):
-    p3 = (p1 + p2) / 2
-    x_diff = p1.getX() - p2.getX()
-    y_diff = p1.getY() - p2.getY()
-    a = -x_diff / y_diff
-    b = p3.getY() - a * p3.getX()
+# def get_bisection(p1: P, p2: P):
+#     p3 = (p1 + p2) / 2
+#     x_diff = p1.getX() - p2.getX()
+#     y_diff = p1.getY() - p2.getY()
+#     a = -x_diff / y_diff
+#     b = p3.getY() - a * p3.getX()
+#     return F(a, b)
+def get_bisection(p1, p2):
+    p3 = ((p1[0] + p2[0]) / 2, (p1[1] + p2[1]) / 2)
+    x_diff = p1[0] - p2[0]
+    y_diff = p1[1] - p2[1]
+    if y_diff == 0:
+        # TODO: 垂直線
+        pass
+    if x_diff and y_diff:
+        a = -x_diff / y_diff
+    elif 
+    b = p3[1] - a * p3[0]
     return F(a, b)
