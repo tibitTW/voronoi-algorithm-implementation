@@ -17,8 +17,8 @@ class sc:
         self.mainframe.grid(column=0, row=0)
 
         # main canvas
-        main_canvas = Canvas(self.mainframe, width=600, height=600, background="white")
-        main_canvas.grid(column=0, row=0)
+        self.canvas = Canvas(self.mainframe, width=600, height=600, background="white")
+        self.canvas.grid(column=0, row=0)
 
         # frame of buttons
         self.sideframe = ttk.Frame(self.root, padding="0 10 10 10")
