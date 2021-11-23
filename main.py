@@ -113,8 +113,3 @@ if __name__ == "__main__":
     main_sc = sc()
 
     main_sc.mainloop()
-
-
-# test
-# main_canvas.create_line(10, 5, 200, 50)
-# main_canvas.create_oval(30, 30, 100, 100)
