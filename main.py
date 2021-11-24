@@ -125,15 +125,35 @@ class sc:
         # TODO: 優化
         elif len(self.graph_contents["points"]) == 2:
             p1, p2 = self.graph_contents["points"]
+
+            # 共點
+            if p1 == p2:
+                return
+            # 垂直線, 無法使用f(x)表示
+            if p1[1] == p2[1]:
+                x = (p1[0] + p2[0]) / 2
+                self.print_line(x, 0, x, 600)
+                return
+
             fx = get_bisection(p1, p2)
             self.print_line(0, fx.get_val(0), 600, fx.get_val(600))
 
         elif len(self.graph_contents["points"]) == 3:
-            if "三點共線":
-                self.graph_contents["points"].sort()
-                p1, p2, p3 = self.graph_contents["points"]
-                # TODO: 2. 做p1 p2中垂線
-                # TODO: 3. 做p2 p3中垂線
+            self.graph_contents["points"].sort()
+            p1, p2, p3 = self.graph_contents["points"]
+            # 共點 + 垂直線
+            if p1[1] == p2[1] == p3[1]:
+                x1 = (p1[0] + p2[0]) / 2
+                x2 = (p2[0] + p3[0]) / 2
+                self.print_line(x1, 0, x1, 600)
+                self.print_line(x2, 0, x2, 600)
+                return
+            # 例外狀況 & 共點
+            if p1[0] == p2[0] == p3[0] or ((p2[0] - p1[0]) / (p3[0] - p2[0]) == (p2[1] - p1[1]) / (p3[1] - p2[1])):
+                fx1 = get_bisection(p1, p2)
+                fx2 = get_bisection(p2, p3)
+                self.print_line(0, fx1.get_val(0), 600, fx1.get_val(600))
+                self.print_line(0, fx2.get_val(0), 600, fx2.get_val(600))
             else:
                 # TODO: 1. 找ab中垂線
                 # TODO: 2. 找bc中垂線
@@ -141,6 +161,7 @@ class sc:
                 # TODO: 4. 找相交點 & ac中垂線
                 pass
         else:
+            # TODO
             print("TODO: solve problems using more than 3 points.")
 
 
