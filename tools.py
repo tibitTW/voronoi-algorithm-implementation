@@ -104,19 +104,23 @@ class L:
 
 
 class F:
-    def __init__(self, a_val=0, b_val=0) -> None:
-        self._a = a_val
-        self._b = b_val
+    def __init__(self, a=0, b=0, c=0) -> None:
+        self._a = a
+        self._b = b
+        self._c = c
 
     def __str__(self) -> str:
-        return f"f(x) = {self._a} * x + {self._b}"
+        return f"function: {self._a}x + {self._b}y = {self._c}"
+
+    def get_y_val(self, x):
+        return (self._c - self._a * x) / self._b
+
+    def get_x_val(self, y):
+        return (self._c - self._b * y) / self._a
 
     # FIXME rename this function
     def get_val(self, x):
         return self._a * x + self._b
-
-    def get_x_val(self, y):
-        return (y - self.b) / self.a
 
 
 # 找中垂線
@@ -131,11 +135,6 @@ def get_bisection(p1, p2):
     p3 = ((p1[0] + p2[0]) / 2, (p1[1] + p2[1]) / 2)
     x_diff = p1[0] - p2[0]
     y_diff = p1[1] - p2[1]
-    if y_diff == 0:
-        # TODO: 垂直線
-        pass
-    if x_diff and y_diff:
-        a = -x_diff / y_diff
-    elif 
+    a = -x_diff / y_diff
     b = p3[1] - a * p3[0]
     return F(a, b)
