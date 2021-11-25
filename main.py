@@ -2,6 +2,7 @@
 
 from tkinter import *
 from tkinter import ttk
+from fractions import Fraction
 
 import file_process as fp
 from tools import *
@@ -120,46 +121,64 @@ class sc:
 
     # TODO: 寫成 divide & conquer 解法
     def do_voronoi(self):
-        if len(self.graph_contents["points"]) == 1:
+        if len(self.graph_contents["points"]) <= 1:
             return
-        # TODO: 優化
         elif len(self.graph_contents["points"]) == 2:
             p1, p2 = self.graph_contents["points"]
-
-            # 共點
-            if p1 == p2:
-                return
-            # 垂直線, 無法使用f(x)表示
-            if p1[1] == p2[1]:
-                x = (p1[0] + p2[0]) / 2
-                self.print_line(x, 0, x, 600)
+            if p1 == p2:  # 共點
                 return
 
-            fx = get_bisection(p1, p2)
-            self.print_line(0, fx.get_val(0), 600, fx.get_val(600))
+            x1, y1, x2, y2 = get_bisection(p1, p2)
+            self.print_line(x1, y1, x2, y2)
 
         elif len(self.graph_contents["points"]) == 3:
             self.graph_contents["points"].sort()
             p1, p2, p3 = self.graph_contents["points"]
-            # 共點 + 垂直線
-            if p1[1] == p2[1] == p3[1]:
-                x1 = (p1[0] + p2[0]) / 2
-                x2 = (p2[0] + p3[0]) / 2
-                self.print_line(x1, 0, x1, 600)
-                self.print_line(x2, 0, x2, 600)
+            # 共點 + 垂直線 or 水平線
+            if p1[1] == p2[1] == p3[1] or p1[0] == p2[0] == p3[0]:
+                x1, y1, x2, y2 = get_bisection(p1, p2)
+                self.print_line(x1, y1, x2, y2)
+                x1, y1, x2, y2 = get_bisection(p2, p3)
+                self.print_line(x1, y1, x2, y2)
                 return
-            # 例外狀況 & 共點
-            if p1[0] == p2[0] == p3[0] or ((p2[0] - p1[0]) / (p3[0] - p2[0]) == (p2[1] - p1[1]) / (p3[1] - p2[1])):
-                fx1 = get_bisection(p1, p2)
-                fx2 = get_bisection(p2, p3)
-                self.print_line(0, fx1.get_val(0), 600, fx1.get_val(600))
-                self.print_line(0, fx2.get_val(0), 600, fx2.get_val(600))
+
+            # 3點共線
+            if Fraction(p2[0] - p1[0], p3[0] - p2[0]) == Fraction((p2[1] - p1[1]), (p3[1] - p2[1])):
+                line1 = get_bisection(p1, p2)
+                self.print_line(*line1)
+                line2 = get_bisection(p2, p3)
+                self.print_line(*line2)
             else:
-                # TODO: 1. 找ab中垂線
-                # TODO: 2. 找bc中垂線
-                # TODO: 3. 找中垂線相交點
-                # TODO: 4. 找相交點 & ac中垂線
-                pass
+                # 1. 找ab中垂線
+                line1 = a1x, a1y, a2x, a2y = get_bisection(p1, p2)
+                a1, a2 = (a1x, a1y), (a2x, a2y)
+                # 2. 找bc中垂線
+                line2 = b1x, b1y, b2x, b2y = get_bisection(p2, p3)
+                b1, b2 = (b1x, b1y), (b2x, b2y)
+                # 3. 找中垂線交點
+                if intersect(a1, a2, b1, b2):  # 兩線有交點
+                    # a. 找交點位置
+                    x, y = intersection(a1, a2, b1, b2)
+                    line3 = c1x, c1y, c2x, c2y = get_bisection(p1, p3)
+
+                    line11 = (a1x, a1y, x, y)
+                    line12 = (x, y, a2x, a2y)
+                    line21 = (b1x, b1y, x, y)
+                    line22 = (x, y, b2x, b2y)
+                    line31 = (c1x, c1y, x, y)
+                    line32 = (x, y, c2x, c2y)
+                    # TODO: 需要保留的線段
+                    self.print_point(x, y)
+                    self.print_line(*line11)
+                    self.print_line(*line12)
+                    self.print_line(*line21)
+                    self.print_line(*line22)
+                    self.print_line(*line31)
+                    self.print_line(*line32)
+
+                else:  # 兩線無交點
+                    self.print_line(*line1)
+                    self.print_line(*line2)
         else:
             # TODO
             print("TODO: solve problems using more than 3 points.")
