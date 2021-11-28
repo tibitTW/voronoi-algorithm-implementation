@@ -4,50 +4,50 @@ import matplotlib.pyplot as plt
 
 class P:
     def __init__(self, x=0, y=0) -> None:
-        self._x = x
-        self._y = y
+        self.x = x
+        self.y = y
 
     def __str__(self) -> str:
-        return f"P({self._x}, {self._y})"
+        return f"P({self.x}, {self.y})"
 
     def setX(self, val):
-        self._x = val
+        self.x = val
 
     def setY(self, val):
-        self._y = val
+        self.y = val
 
     def setPos(self, x_val=None, y_val=None):
         if x_val:
-            self._x = x_val
+            self.x = x_val
         if y_val:
-            self._y = y_val
+            self.y = y_val
 
     def getX(self):
-        return self._x
+        return self.x
 
     def getY(self):
-        return self._y
+        return self.y
 
     def getPos(self):
-        return (self._x, self._y)
+        return (self.x, self.y)
 
     # FIXME needs to update after implement in tkinter
     def draw(self, c="k"):
-        plt.scatter(self._x, self._y, c=c)
+        plt.scatter(self.x, self.y, c=c)
 
     def __add__(self, P2):
-        return P(self._x + P2._x, self._y + P2._y)
+        return P(self.x + P2._x, self.y + P2._y)
 
     def __sub__(self, P2):
-        return P(self.x - P2._x, self._y - P2._y)
+        return P(self.x - P2._x, self.y - P2._y)
 
     def __truediv__(self, n):
-        x = self._x / n
-        y = self._y / n
+        x = self.x / n
+        y = self.y / n
 
-        if self._x % n == 0:
+        if self.x % n == 0:
             x = int(x)
-        if self._y % n == 0:
+        if self.y % n == 0:
             y = int(y)
 
         return P(x, y)
