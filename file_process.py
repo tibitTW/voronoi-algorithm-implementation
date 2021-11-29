@@ -10,7 +10,7 @@ def open_in_file(display_lb_text=None) -> list:
     if display_lb_text:
         display_lb_text.set("using file:\n" + filename.split("/")[-1])
 
-    with open(filename, "r") as f:
+    with open(filename, "r", encoding="utf-8") as f:
         data = f.read()
 
     data = data.strip().split("\n")
@@ -19,33 +19,24 @@ def open_in_file(display_lb_text=None) -> list:
     i = 0
     while i < len(data):
 
-        # empty line
-        if len(data[i]) == 0:
+        # empty line & comment line
+        if not data[i] or data[i][0] == "#":
             i += 1
-        # read comment
-        elif data[i][0] == "#":
-            i += 1
+        elif data[i] == "0":
+            break
         else:
-            try:
-                # 讀一組測試資料
-                line = data[i].split(" ")
-                if len(line) == 1:
-                    # read EOF
-                    if line[0] == "0":
-                        return dataset
+            set_size = int(data[i])
+            i += 1
+            pi = 0
+            contents = {"points": [], "lines": []}
+            while pi < set_size:
+                if data[i] and data[i][0] != "#":
+                    x, y = map(int, data[i].split(" "))
+                    contents["points"].append((x, y))
 
-                    size = int(line[0])
-                    contents = {"points": [], "lines": []}
-                    for li in range(size):
-                        contents["points"].append(tuple(map(int, data[i + li + 1].split())))
-
-                    dataset.append(contents)
-                    i += size + 1
-
-                else:
-                    i += 1
-            except Exception as e:
-                print(e)
+                pi += 1
+                i += 1
+            dataset.append(contents)
 
     return dataset
 
