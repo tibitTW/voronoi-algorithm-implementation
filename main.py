@@ -134,65 +134,63 @@ class sc:
         elif len(self.graph_contents["points"]) == 3:
             self.graph_contents["points"].sort()
             p1, p2, p3 = self.graph_contents["points"]
-            # 共點 + 垂直線 or 水平線
-            if p1[1] == p2[1] == p3[1] or p1[0] == p2[0] == p3[0]:
-                x1, y1, x2, y2 = get_bisection(p1, p2)
-                self.print_line(x1, y1, x2, y2)
-                x1, y1, x2, y2 = get_bisection(p2, p3)
-                self.print_line(x1, y1, x2, y2)
-                return
 
-            # 3點共線
-            if Fraction(p2[0] - p1[0], p3[0] - p2[0]) == Fraction((p2[1] - p1[1]), (p3[1] - p2[1])):
-                line1 = get_bisection(p1, p2)
+            # 1. 找ab中垂線
+            line1 = a1x, a1y, a2x, a2y = get_bisection(p1, p2)
+            a1, a2 = (a1x, a1y), (a2x, a2y)
+            # 2. 找bc中垂線
+            line2 = b1x, b1y, b2x, b2y = get_bisection(p2, p3)
+            b1, b2 = (b1x, b1y), (b2x, b2y)
+            # 3. 找中垂線交點
+            if intersect(a1, a2, b1, b2):  # 兩線有交點
+                # a. 找交點位置
+                x, y = intersection(a1, a2, b1, b2)
+                if p2[1] > p1[1]:
+                    top_point = p1
+                    btn_point = p2
+                else:
+                    top_point = p2
+                    btn_point = p1
+
+                hyperplane = []
+                hpx1, hpy1, hpx2, hpy2 = get_bisection(top_point, p3)
+                if hpy1 < hpy2:
+                    pass
+                    hyperplane.append((hpx1, hpy1, x, y))
+                else:
+                    hyperplane.append((hpx2, hpy2, x, y))
+
+                if a1x - x < 0:
+                    line1 = (a1x, a1y, x, y)
+                else:
+                    line1 = (x, y, a2x, a2y)
+
+                c1x, c1y, c2x, c2y = get_bisection(btn_point, p3)
+
+                if c1y > y:
+                    hyperplane.append((x, y, c1x, c1y))
+                else:
+                    hyperplane.append((x, y, c2x, c2y))
+
+                self.print_line(*line1, "red")
+                self.print_line(*hyperplane[0], "blue")
+                self.print_line(*hyperplane[1], "green")
+
+                for l in (line1, hyperplane[0], hyperplane[1]):
+                    x1, y1, x2, y2 = l
+                    if x1 < x2:
+                        self.graph_contents["lines"].append(l)
+                    elif x1 == x2:
+                        if y1 < y2:
+                            self.graph_contents["lines"].append(l)
+                        else:
+                            self.graph_contents["lines"].append((x2, y2, x1, y1))
+                    else:
+                        self.graph_contents["lines"].append((x2, y2, x1, y1))
+
+            else:  # 兩線無交點
                 self.print_line(*line1)
-                line2 = get_bisection(p2, p3)
                 self.print_line(*line2)
-            else:
-                # 1. 找ab中垂線
-                line1 = a1x, a1y, a2x, a2y = get_bisection(p1, p2)
-                a1, a2 = (a1x, a1y), (a2x, a2y)
-                # 2. 找bc中垂線
-                line2 = b1x, b1y, b2x, b2y = get_bisection(p2, p3)
-                b1, b2 = (b1x, b1y), (b2x, b2y)
-                # 3. 找中垂線交點
-                if intersect(a1, a2, b1, b2):  # 兩線有交點
-                    # a. 找交點位置
-                    x, y = intersection(a1, a2, b1, b2)
-                    if p2[1] > p1[1]:
-                        top_point = p1
-                        btn_point = p2
-                    else:
-                        top_point = p2
-                        btn_point = p1
-
-                    hyperplane = []
-                    hpx1, hpy1, hpx2, hpy2 = get_bisection(top_point, p3)
-                    if hpy1 < hpy2:
-                        pass
-                        hyperplane.append((hpx1, hpy1, x, y))
-                    else:
-                        hyperplane.append((hpx2, hpy2, x, y))
-
-                    if a1x - x < 0:
-                        line1 = (a1x, a1y, x, y)
-                    else:
-                        line1 = (x, y, a2x, a2y)
-
-                    c1x, c1y, c2x, c2y = get_bisection(btn_point, p3)
-
-                    if c1y > y:
-                        hyperplane.append((x, y, c1x, c1y))
-                    else:
-                        hyperplane.append((x, y, c2x, c2y))
-
-                    self.print_line(*line1)
-                    self.print_line(*hyperplane[0])
-                    self.print_line(*hyperplane[1])
-
-                else:  # 兩線無交點
-                    self.print_line(*line1)
-                    self.print_line(*line2)
         else:
             # TODO
             print("TODO: solve problems using more than 3 points.")
