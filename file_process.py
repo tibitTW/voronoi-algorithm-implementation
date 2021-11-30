@@ -77,9 +77,9 @@ def save_vd_file(contents: dict):
         return
 
     for x, y in points:
-        f.write(f"P {x} {y}\n")
+        f.write(f"P {x:.0f} {y:.0f}\n")
 
     for x1, y1, x2, y2 in lines:
-        f.write(f"E {x1} {y1} {x2} {y2}\n")
+        f.write(f"E {x1:.0f} {y1:.0f} {x2:.0f} {y2:.0f}\n")
 
     f.close()
