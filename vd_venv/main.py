@@ -51,8 +51,8 @@ class sc:
         self.file_name_lb.grid(row=0)
         self.read_file_btn.grid(row=1)
         self.next_set_btn.grid(row=2)
-        self.step_by_step_btn.grid(row=3)
-        self.run_btn.grid(row=4)
+        self.run_btn.grid(row=3)
+        self.step_by_step_btn.grid(row=4)
         self.write_graph_file_btn.grid(row=5)
         self.read_graph_file_btn.grid(row=6)
         self.clear_canvas_btn.grid(row=7)
@@ -148,18 +148,12 @@ class sc:
                     v1 = (p1[1] - p3[1], p3[0] - p1[0])
                     v2 = (p2[1] - p3[1], p3[0] - p2[0])
 
-                    self.print_line(*p3, p3[0] + v1[0], p3[1] + v1[1], "orange")
-                    self.print_line(*p3, p3[0] + v2[0], p3[1] + v2[1], "purple")
-
-                    if v1[0] / v1[1] < v2[0] / v2[1]:
+                    if v1[0] / (v1[1] + 1e-7) < v2[0] / (v2[1] + 1e-7):
                         top_point = p1
                         btn_point = p2
                     else:
                         top_point = p2
                         btn_point = p1
-
-                    self.print_point(*top_point, 3, "red")
-                    self.print_point(*btn_point, 3, "blue")
 
                     hyperplane = []
                     hpx1, hpy1, hpx2, hpy2 = get_bisection(top_point, p3)
@@ -169,10 +163,10 @@ class sc:
                     else:
                         hyperplane.append((hpx2, hpy2, x, y))
 
-                    if a1x - x < 0:
-                        line1 = (a1x, a1y, x, y)
+                    if intersect(a1, (x, y), p1, p2):
+                        line1 = (*a1, x, y)
                     else:
-                        line1 = (x, y, a2x, a2y)
+                        line1 = (x, y, *a2)
 
                     c1x, c1y, c2x, c2y = get_bisection(btn_point, p3)
 
@@ -181,9 +175,9 @@ class sc:
                     else:
                         hyperplane.append((x, y, c2x, c2y))
 
-                    self.print_line(*line1, "red")
-                    self.print_line(*hyperplane[0], "blue")
-                    self.print_line(*hyperplane[1], "green")
+                    self.print_line(*line1)
+                    self.print_line(*hyperplane[0])
+                    self.print_line(*hyperplane[1])
 
                     for l in (line1, hyperplane[0], hyperplane[1]):
                         x1, y1, x2, y2 = l
