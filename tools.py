@@ -9,14 +9,18 @@ class VD:
         self.convexHullPoints = []
 
 
+def get_squared_distance(p1, p2):
+    return (p1[0] - p2[0]) ** 2 + (p1[1] - p2[1]) ** 2
+
+
 # 找中垂線
 def get_bisection(p1, p2):
     if p1[0] == p2[0]:  # 水平線
         y = (p1[1] + p2[1]) / 2
-        return 0, y, 600, y
+        return (0, y, 600, y)
     if p1[1] == p2[1]:  # 垂直線
         x = (p1[0] + p2[0]) / 2
-        return x, 0, x, 600
+        return (x, 0, x, 600)
 
     p3 = ((p1[0] + p2[0]) / 2, (p1[1] + p2[1]) / 2)
     v = (p1[1] - p2[1], p2[0] - p1[0])
@@ -26,26 +30,35 @@ def get_bisection(p1, p2):
     pC = (600, p3[1] + (600 - p3[0]) * v[1] / v[0])
     pD = (p3[0] + (600 - p3[1]) * v[0] / v[1], 600)
 
-    if v[0] * v[1] < 0:  # BC比, AD比
-        if pB[0] < 0 or pB[0] > 600:
+    if v[0] * v[1] > 0:  # AB比，CD比
+        dis_ac = get_squared_distance(pA, pC)
+        dis_bc = get_squared_distance(pB, pC)
+        dis_ad = get_squared_distance(pA, pD)
+        if dis_ac < dis_bc:
+            pS = pA
+        else:
+            pS = pB
+
+        if dis_ac < dis_ad:
+            pE = pC
+        else:
+            pE = pD
+
+    else:  # BC比, AD比
+        dis_ac = get_squared_distance(pA, pC)
+        dis_bc = get_squared_distance(pB, pC)
+        dis_dc = get_squared_distance(pD, pC)
+        if dis_ac < dis_bc:
             pS = pC
         else:
             pS = pB
-        if pA[0] < 0 or pA[0] > 600:
-            pE = pD
-        else:
+        dis_ad = get_squared_distance(pA, pD)
+        if dis_ac < dis_dc:
             pE = pA
-    else:  # AB比，CD比
-        if pA[0] < 0 or pA[0] > 600:
-            pS = pB
         else:
-            pS = pA
-        if pC[0] < 0 or pC[0] > 600:
             pE = pD
-        else:
-            pE = pC
 
-    return pS[0], pS[1], pE[0], pE[1]
+    return (pS[0], pS[1], pE[0], pE[1])
 
 
 def cross(o, a, b):

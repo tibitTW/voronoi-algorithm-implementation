@@ -23,14 +23,15 @@ class sc:
         self.canvas.bind("<Button-1>", self.canvas_mouse_click_event)
         self.canvas.grid(column=0, row=0)
 
-        # frame of buttons
+        # frame including buttons
         self.sideframe = ttk.Frame(self.root, padding="0 10 10 10")
         self.sideframe.grid(column=1, row=0)
         self.init_sideframe_elements()
         self.init_sideframe_layout()
 
-        # record points and lines
+        # store all points and lines to show
         self.graph_contents = {"points": [], "lines": []}
+        # store point data read from file
         self.dataset = []
         self.dataset_idx = -1
 
@@ -74,16 +75,14 @@ class sc:
 
     def read_graph(self):
         # read file
-        graph_content = fp.open_vd_file()
-        self.graph_contents["points"] = graph_content["points"]
-        self.graph_contents["lines"] = graph_content["lines"]
-        self.print_graph(graph_content)
+        self.graph_contents = fp.open_vd_file()
+        self.print_graph(self.graph_contents)
 
     ####################### draw graph ######################
     def clean_canvas(self):
         self.canvas.delete("all")
 
-    def print_point(self, x: int, y: int, r: int = 3, fill="black", outline="black"):
+    def print_point(self, x: int, y: int, r: int = 1, fill="black", outline="black"):
         self.canvas.create_oval(x - r, y - r, x + r, y + r, fill=fill, outline=outline)
 
     def print_line(self, x1: int, y1: int, x2: int, y2: int, fill="black"):
@@ -135,58 +134,64 @@ class sc:
             self.graph_contents["points"].sort()
             p1, p2, p3 = self.graph_contents["points"]
 
-            # 1. 找ab中垂線
             line1 = a1x, a1y, a2x, a2y = get_bisection(p1, p2)
             a1, a2 = (a1x, a1y), (a2x, a2y)
-            # 2. 找bc中垂線
             line2 = b1x, b1y, b2x, b2y = get_bisection(p2, p3)
             b1, b2 = (b1x, b1y), (b2x, b2y)
+
+            # self.print_line(*line1, "red")
+            # self.print_line(*line2, "green")
             # 3. 找中垂線交點
             if intersect(a1, a2, b1, b2):  # 兩線有交點
-                # a. 找交點位置
+                # 找交點位置
                 x, y = intersection(a1, a2, b1, b2)
-                if p2[1] > p1[1]:
-                    top_point = p1
-                    btn_point = p2
-                else:
-                    top_point = p2
-                    btn_point = p1
+                if 0 <= min(x, y) and max(x, y) <= 600:  # 交點在範圍內
+                    if p2[1] > p1[1]:
+                        top_point = p1
+                        btn_point = p2
+                    else:
+                        top_point = p2
+                        btn_point = p1
 
-                hyperplane = []
-                hpx1, hpy1, hpx2, hpy2 = get_bisection(top_point, p3)
-                if hpy1 < hpy2:
-                    pass
-                    hyperplane.append((hpx1, hpy1, x, y))
-                else:
-                    hyperplane.append((hpx2, hpy2, x, y))
+                    hyperplane = []
+                    hpx1, hpy1, hpx2, hpy2 = get_bisection(top_point, p3)
+                    if hpy1 < hpy2:
+                        pass
+                        hyperplane.append((hpx1, hpy1, x, y))
+                    else:
+                        hyperplane.append((hpx2, hpy2, x, y))
 
-                if a1x - x < 0:
-                    line1 = (a1x, a1y, x, y)
-                else:
-                    line1 = (x, y, a2x, a2y)
+                    if a1x - x < 0:
+                        line1 = (a1x, a1y, x, y)
+                    else:
+                        line1 = (x, y, a2x, a2y)
 
-                c1x, c1y, c2x, c2y = get_bisection(btn_point, p3)
+                    c1x, c1y, c2x, c2y = get_bisection(btn_point, p3)
 
-                if c1y > y:
-                    hyperplane.append((x, y, c1x, c1y))
-                else:
-                    hyperplane.append((x, y, c2x, c2y))
+                    if c1y > y:
+                        hyperplane.append((x, y, c1x, c1y))
+                    else:
+                        hyperplane.append((x, y, c2x, c2y))
 
-                self.print_line(*line1, "red")
-                self.print_line(*hyperplane[0], "blue")
-                self.print_line(*hyperplane[1], "green")
+                    self.print_line(*line1, "red")
+                    self.print_line(*hyperplane[0], "blue")
+                    self.print_line(*hyperplane[1], "green")
 
-                for l in (line1, hyperplane[0], hyperplane[1]):
-                    x1, y1, x2, y2 = l
-                    if x1 < x2:
-                        self.graph_contents["lines"].append(l)
-                    elif x1 == x2:
-                        if y1 < y2:
+                    for l in (line1, hyperplane[0], hyperplane[1]):
+                        x1, y1, x2, y2 = l
+                        if x1 < x2:
                             self.graph_contents["lines"].append(l)
+                        elif x1 == x2:
+                            if y1 < y2:
+                                self.graph_contents["lines"].append(l)
+                            else:
+                                self.graph_contents["lines"].append((x2, y2, x1, y1))
                         else:
                             self.graph_contents["lines"].append((x2, y2, x1, y1))
-                    else:
-                        self.graph_contents["lines"].append((x2, y2, x1, y1))
+
+                else:  # 交點不在範圍內
+                    self.print_line(*line1)
+                    self.print_line(*line2)
 
             else:  # 兩線無交點
                 self.print_line(*line1)
