@@ -159,22 +159,36 @@ class sc:
                 if intersect(a1, a2, b1, b2):  # 兩線有交點
                     # a. 找交點位置
                     x, y = intersection(a1, a2, b1, b2)
-                    line3 = c1x, c1y, c2x, c2y = get_bisection(p1, p3)
+                    if p2[1] > p1[1]:
+                        top_point = p1
+                        btn_point = p2
+                    else:
+                        top_point = p2
+                        btn_point = p1
 
-                    line11 = (a1x, a1y, x, y)
-                    line12 = (x, y, a2x, a2y)
-                    line21 = (b1x, b1y, x, y)
-                    line22 = (x, y, b2x, b2y)
-                    line31 = (c1x, c1y, x, y)
-                    line32 = (x, y, c2x, c2y)
-                    # TODO: 需要保留的線段
-                    self.print_point(x, y)
-                    self.print_line(*line11)
-                    self.print_line(*line12)
-                    self.print_line(*line21)
-                    self.print_line(*line22)
-                    self.print_line(*line31)
-                    self.print_line(*line32)
+                    hyperplane = []
+                    hpx1, hpy1, hpx2, hpy2 = get_bisection(top_point, p3)
+                    if hpy1 < hpy2:
+                        pass
+                        hyperplane.append((hpx1, hpy1, x, y))
+                    else:
+                        hyperplane.append((hpx2, hpy2, x, y))
+
+                    if a1x - x < 0:
+                        line1 = (a1x, a1y, x, y)
+                    else:
+                        line1 = (x, y, a2x, a2y)
+
+                    c1x, c1y, c2x, c2y = get_bisection(btn_point, p3)
+
+                    if c1y > y:
+                        hyperplane.append((x, y, c1x, c1y))
+                    else:
+                        hyperplane.append((x, y, c2x, c2y))
+
+                    self.print_line(*line1)
+                    self.print_line(*hyperplane[0])
+                    self.print_line(*hyperplane[1])
 
                 else:  # 兩線無交點
                     self.print_line(*line1)
