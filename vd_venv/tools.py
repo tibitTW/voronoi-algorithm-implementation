@@ -1,7 +1,3 @@
-# point
-import matplotlib.pyplot as plt
-
-
 class VD:
     def __init__(self):
         self.points = []
