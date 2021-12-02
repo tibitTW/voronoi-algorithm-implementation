@@ -67,6 +67,7 @@ class sc:
     #################### file processing ####################
     def read_dataset(self):
         self.dataset = fp.open_in_file(self.file_path)
+        self.dataset_idx = -1
 
     def save_graph(self):
         self.graph_contents["points"].sort()
@@ -74,7 +75,8 @@ class sc:
         fp.save_vd_file(self.graph_contents)
 
     def read_graph(self):
-        # read file
+        self.clear_contents()
+        self.clean_canvas()
         self.graph_contents = fp.open_vd_file()
         self.print_graph(self.graph_contents)
 
@@ -82,7 +84,7 @@ class sc:
     def clean_canvas(self):
         self.canvas.delete("all")
 
-    def print_point(self, x: int, y: int, r: int = 1, fill="black", outline="black"):
+    def print_point(self, x: int, y: int, r: int = 3, fill="white", outline="black"):
         self.canvas.create_oval(x - r, y - r, x + r, y + r, fill=fill, outline=outline)
 
     def print_line(self, x1: int, y1: int, x2: int, y2: int, fill="black"):
