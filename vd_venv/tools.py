@@ -73,7 +73,7 @@ def get_bisection(p1, p2):
 def cross(o, a, b):
     ax, ay = a
     bx, by = b
-    ox, oy = 0
+    ox, oy = o
     return (ax - ox) * (by - oy) - (ay - oy) * (bx - ox)
 
 

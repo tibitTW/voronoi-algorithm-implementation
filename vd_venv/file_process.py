@@ -68,8 +68,8 @@ def open_vd_file():
 
 
 def save_vd_file(contents: dict):
-    points = contents["points"]
-    lines = contents["lines"]
+    points = sorted(contents["points"])
+    lines = sorted(contents["lines"])
     f = fd.asksaveasfile(mode="w", defaultextension=".vd", filetypes={("voronoi diagram files", "*.vd")})
 
     if f is None:
