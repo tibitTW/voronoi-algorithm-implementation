@@ -1,9 +1,9 @@
 class VD:
     def __init__(self, points=None, lines=None):
         self.points = []
-        self.convexHullPoints = set([])
         self.lines = []
-        self.cuttedLines = []
+        self.CH_points = []
+        self.CH_lines = []
 
         if points:
             self.points = points
@@ -133,4 +133,6 @@ def get_vd(points):
 # TODO
 def merge_vd(left_vd, right_vd):
     res_vd = VD()
+    res_vd.points = left_vd.points + right_vd.points
+
     return res_vd
