@@ -5,7 +5,7 @@ from tkinter import filedialog as fd
 # 開測資
 def open_in_file(display_lb_text=None) -> list:
 
-    filetypes = {("input files", "*.in")}
+    filetypes = {("input files", "*.in"), ("all files", "*.*")}
     filename = fd.askopenfilename(title="選取檔案", initialdir="./", filetypes=filetypes)
     if display_lb_text:
         display_lb_text.set("using file:\n" + filename.split("/")[-1])
@@ -42,7 +42,7 @@ def open_in_file(display_lb_text=None) -> list:
 
 
 def open_vd_file():
-    filetypes = {("voronoi diagram files", "*.vd")}
+    filetypes = {("voronoi diagram files", "*.vd"), ("all files", "*.*")}
     filename = fd.askopenfilename(title="選取檔案", initialdir="./", filetypes=filetypes)
 
     with open(filename, "r") as f:
@@ -70,7 +70,7 @@ def open_vd_file():
 def save_vd_file(contents: dict):
     points = sorted(contents["points"])
     lines = sorted(contents["lines"])
-    f = fd.asksaveasfile(mode="w", defaultextension=".vd", filetypes={("voronoi diagram files", "*.vd")})
+    f = fd.asksaveasfile(mode="w", defaultextension=".vd", filetypes={("voronoi diagram files", "*.vd"), ("all files", "*.*")})
 
     if f is None:
         print("save file failed")
