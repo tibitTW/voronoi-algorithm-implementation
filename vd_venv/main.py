@@ -134,9 +134,11 @@ class sc:
         for p in points:
             self.canvas.create_text(p[0], p[1], text=str(points.index(p)), anchor="nw")
 
+        print(solutions[-1])
         lines = solutions[-1].CH_lines
         for l in lines:
-            self.print_line(*l)
+            print(l.line)
+            self.print_line(*l.line)
 
 
 if __name__ == "__main__":

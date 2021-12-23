@@ -18,6 +18,13 @@ class VD:
         return f"VD: points: {self.points},\nlines: {self.lines},\nCH_points: {self.CH_points},\nCH_lines: {self.CH_lines}"
 
 
+class BisectionLine:
+    def __init__(self, line, p1, p2) -> None:
+        self.line = line
+        self.p1 = p1
+        self.p2 = p2
+
+
 #################### mathematics functions ####################
 def get_squared_distance(p1, p2):
     x1, y1 = p1
@@ -120,11 +127,11 @@ def do_vd(points):
                 CH_points=points,
             )
         if len(points) == 2:
-            bisection = get_bisection(*points)
+            bisection = BisectionLine(get_bisection(*points), *points)
             return VD(
-                points=list(points),
-                CH_points=list(points),
+                points=points,
                 lines=[bisection],
+                CH_lines=[bisection],
             )
 
         left_vd = get_vd(points[0 : len(points) // 2])
@@ -134,15 +141,14 @@ def do_vd(points):
     def merge_vd(left_vd, right_vd):
         if len(left_vd.points) <= 2 and len(right_vd.points) <= 2:
             if len(left_vd.points) == 1 and len(right_vd.points) == 1:  # [1, 1]
-                bisection = get_bisection(left_vd.points[0], right_vd.points[0])
-
-                res_vd = VD(
+                print("case 2")
+                bisection = BisectionLine(get_bisection(left_vd.points[0], right_vd.points[0]), left_vd.points[0], right_vd.points[0])
+                return VD(
                     points=left_vd.points + right_vd.points,
-                    CH_points=left_vd.points + right_vd.points,
+                    CH_points=left_vd.CH_points + right_vd.CH_points,
                     lines=[bisection],
                     CH_lines=[bisection],
                 )
-                return res_vd
 
             elif len(left_vd.points) == 1:  # [1, 2]
                 left_p = left_vd.points[0]
@@ -162,22 +168,81 @@ def do_vd(points):
 
                 # 畫中垂線
                 hyperplane = []
-                a1x, a1y, a2x, a2y = bisection1 = get_bisection(left_p, right_top)
-                b1x, b1y, b2x, b2y = bisection2 = get_bisection(left_p, right_bottom)
+                a1x, a1y, a2x, a2y = get_bisection(left_p, right_top)
+                b1x, b1y, b2x, b2y = get_bisection(left_p, right_bottom)
                 a1, a2 = (a1x, a1y), (a2x, a2y)
                 b1, b2 = (b1x, b1y), (b2x, b2y)
-                if intersect(a1, a2, b1, b2):
-                    ox, oy = intersection(a1, a2, b1, b2)
-                    if a1y < oy:
-                        hyperplane.append((a1x, a1y), (ox, oy))
-                    if a2y > oy:
-                        hyperplane.append((a2x, a2y), (ox, oy))
 
-                    hyperplane = [intersection(a1, a2, b1, b2)]
+                if intersect(a1, a2, b1, b2):
+                    is_intersect = True
+                    ox, oy = intersection(a1, a2, b1, b2)
+                    if 0 <= min(ox, oy) and max(ox, oy) <= 600:  # 共點在範圍內
+
+                        # hyperplane point 0
+                        if a1y < oy:
+                            hyperplane.append((a1x, a1y))
+                        elif a2y < oy:
+                            hyperplane.append((a2x, a2y))
+                        else:
+                            if a1x < ox:
+                                hyperplane.append((a1x, a1y))
+                            else:
+                                hyperplane.append((a2x, a2y))
+
+                        # hyperplane point 1
+                        hyperplane.append((ox, oy))
+
+                        # hyperplane point 2
+                        if oy < b1y:
+                            hyperplane.append((b1x, b1y))
+                        elif oy < b2y:
+                            hyperplane.append((b2x, b2y))
+                        else:
+                            if ox < b1x:
+                                hyperplane.append((b1x, b1y))
+                            else:
+                                hyperplane.append((b2x, b2y))
+
+                        c1x, c1y, c2x, c2y = get_bisection(right_top, right_bottom)
+                        if ox < c1x:
+                            cutted_line = (ox, oy, c1x, c1y)
+                        else:
+                            cutted_line = (ox, oy, c2x, c2y)
+
+                        right_vd_line = BisectionLine(cutted_line, right_top, right_bottom)
+                        lines = [
+                            BisectionLine((hyperplane[0][0], hyperplane[0][1], hyperplane[1][0], hyperplane[1][1]), left_p, right_p1),
+                            BisectionLine((hyperplane[1][0], hyperplane[1][1], hyperplane[2][0], hyperplane[2][1]), left_p, right_p2),
+                            right_vd_line,
+                        ]
+
+                    else:  # 共點不在範圍內
+                        is_intersect = False
+                else:
+                    is_intersect = False
+
+                if not is_intersect:
+                    d1 = get_squared_distance(left_p, right_p1)
+                    d2 = get_squared_distance(left_p, right_p2)
+                    d3 = get_squared_distance(right_p1, right_p2)
+                    max_d = max(d1, d2, d3)
+                    if max_d == d1:  # right_p2
+                        line1 = BisectionLine(get_bisection(left_p, right_p2), left_p, right_p2)
+                        line2 = BisectionLine(get_bisection(right_p2, right_p1), right_p2, right_p1)
+                    elif max_d == d2:  # right_p1
+                        line1 = BisectionLine(get_bisection(left_p, right_p1), left_p, right_p1)
+                        line2 = BisectionLine(get_bisection(right_p1, right_p2), right_p1, right_p2)
+                    elif max_d == d3:  # left_p
+                        line1 = BisectionLine(get_bisection(right_p1, left_p), right_p1, left_p)
+                        line2 = BisectionLine(get_bisection(left_p, right_p2), left_p, right_p2)
+
+                    lines = [line1, line2]
 
                 res_vd = VD(
                     points=left_vd.points + right_vd.points,
                     CH_points=CH_points,
+                    lines=lines,
+                    CH_lines=lines,
                 )
                 return res_vd
 
@@ -293,8 +358,15 @@ def do_vd(points):
     if len(points) <= 1:
         return [VD(points=points, CH_points=points)]
     elif len(points) == 2:
-        bisection = get_bisection(*points)
-        return [VD(points=list(points), CH_lines=[bisection], CH_points=list(points))]
+        bisection = BisectionLine(get_bisection(*points), *points)
+        return [
+            VD(
+                points=list(points),
+                CH_points=list(points),
+                CH_lines=[bisection],
+                lines=[bisection],
+            )
+        ]
     else:
         get_vd(points)
         solutions = [get_vd(points)]
