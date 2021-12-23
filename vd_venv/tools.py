@@ -84,6 +84,12 @@ def get_bisection(p1, p2):
     return (*pS, *pE)
 
 
+# 點積
+def dot(v1, v2):
+    return v1[0] * v2[0] + v1[1] * v2[1]
+
+
+# 叉積
 def cross(o, a, b):
     ax, ay = a
     bx, by = b
@@ -115,6 +121,19 @@ def intersection(a1, a2, b1, b2):
     cross_sb = cross((0, 0), s, b)
     cross_ab = cross((0, 0), a, b)
     return (a1[0] + a[0] * cross_sb / cross_ab, a1[1] + a[1] * cross_sb / cross_ab)
+
+
+def p2l_distance(p, l):
+    v = (l[2], l[0], l[3], l[1])
+    v1 = (p[0] - l[0], p[1] - l[1])
+    v2 = (p[0] - l[2], p[1] - l[3])
+
+    if dot(v, v1) <= 0:
+        return get_squared_distance(p, l[0:2]) ** 0.5
+    if dot(v, v2) >= 0:
+        return get_squared_distance(p, l[2:]) ** 0.5
+
+    return abs(cross(v, v1)) / get_squared_distance(*v) ** 0.5
 
 
 #################### voronoi diagram algorithms ####################
@@ -175,7 +194,7 @@ def do_vd(points):
 
                 if intersect(a1, a2, b1, b2):
                     is_intersect = True
-                    ox, oy = intersection(a1, a2, b1, b2)
+                    po = ox, oy = intersection(a1, a2, b1, b2)
                     if 0 <= min(ox, oy) and max(ox, oy) <= 600:  # 共點在範圍內
 
                         # hyperplane point 0
@@ -204,12 +223,13 @@ def do_vd(points):
                                 hyperplane.append((b2x, b2y))
 
                         c1x, c1y, c2x, c2y = get_bisection(right_top, right_bottom)
-                        if ox < c1x:
-                            cutted_line = (ox, oy, c1x, c1y)
+                        cutted_line1 = (ox, oy, c1x, c1y)
+                        cutted_line2 = (ox, oy, c2x, c2y)
+                        if p2l_distance(po, cutted_line1) < p2l_distance(po, cutted_line2):
+                            right_vd_line = BisectionLine(cutted_line1, right_top, right_bottom)
                         else:
-                            cutted_line = (ox, oy, c2x, c2y)
+                            right_vd_line = BisectionLine(cutted_line2, right_top, right_bottom)
 
-                        right_vd_line = BisectionLine(cutted_line, right_top, right_bottom)
                         lines = [
                             BisectionLine((hyperplane[0][0], hyperplane[0][1], hyperplane[1][0], hyperplane[1][1]), left_p, right_p1),
                             BisectionLine((hyperplane[1][0], hyperplane[1][1], hyperplane[2][0], hyperplane[2][1]), left_p, right_p2),
