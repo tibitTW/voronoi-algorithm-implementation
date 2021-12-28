@@ -35,13 +35,17 @@ class sc:
         self.dataset = []
         self.dataset_idx = -1
 
+        self.steps = -1
+        self.solutions = []
+        self.step_status = 0  # 0: CH, 1: merge CH, 2: 中垂線, 3: merge 中垂線
+
     #################### core functions ####################
     def init_sideframe_elements(self):
         self.file_path = StringVar()
         self.file_name_lb = ttk.Label(self.sideframe, textvariable=self.file_path)
         self.read_file_btn = ttk.Button(self.sideframe, width=16, text="read file", command=self.read_dataset)
         self.next_set_btn = ttk.Button(self.sideframe, width=16, text="next set", command=self.show_next_set)
-        self.step_by_step_btn = ttk.Button(self.sideframe, width=16, text="step by step", command=None)  # TODO : commands
+        self.step_by_step_btn = ttk.Button(self.sideframe, width=16, text="step by step", command=self.step_by_step)  # TODO : commands
         self.run_btn = ttk.Button(self.sideframe, width=16, text="run", command=self.do_voronoi)
         self.write_graph_file_btn = ttk.Button(self.sideframe, width=16, text="save image", command=self.save_graph)
         self.read_graph_file_btn = ttk.Button(self.sideframe, width=16, text="read image", command=self.read_graph)
@@ -58,6 +62,7 @@ class sc:
         self.clear_canvas_btn.grid(row=7)
 
     def canvas_mouse_click_event(self, event):
+        self.steps = -1
         self.graph_contents["points"].append((event.x, event.y))
         self.print_point(event.x, event.y)
 
@@ -103,6 +108,7 @@ class sc:
 
     ######################## others ########################
     def clean(self):
+        self.steps = -1
         self.clean_canvas()
         self.clear_contents()
 
@@ -110,6 +116,7 @@ class sc:
         self.graph_contents = {"points": [], "lines": []}
 
     def show_next_set(self):
+        self.steps = -1
         self.dataset_idx += 1
         if self.dataset_idx < len(self.dataset):
             self.graph_contents = self.dataset[self.dataset_idx]
@@ -122,6 +129,7 @@ class sc:
 
     # TODO: 寫成 divide & conquer 解法
     def do_voronoi(self):
+        self.steps = -1
         self.graph_contents["points"].sort()
         solutions = do_vd(self.graph_contents["points"])
 
@@ -134,11 +142,49 @@ class sc:
         for p in points:
             self.canvas.create_text(p[0], p[1], text=str(points.index(p)), anchor="nw")
 
-        print(solutions[-1])
         lines = solutions[-1].CH_lines
         for l in lines:
             print(l.line)
-            self.print_line(*l.line)
+            self.print_line(*l.line, fill=l.fill)
+
+    def step_by_step(self):
+        if self.steps < 0:
+            self.graph_contents["points"].sort()
+            self.solutions = do_vd(self.graph_contents["points"])
+        else:
+            self.clean_canvas()
+            for p in self.graph_contents["points"]:
+                self.print_point(p[0], p[1])
+
+            points = self.solutions[self.steps].CH_points
+            for i in range(len(points) - 1):
+                self.print_line(*points[i], *points[i + 1])
+            self.print_line(*points[-1], *points[0])
+
+            for l in self.solutions[self.steps].CH_lines:
+                self.print_line(*l.line, fill=l.fill)
+            for l in self.solutions[self.steps].lines:
+                print(l)
+
+            # lines = self.solutions[self.steps].CH_lines
+            # for l in lines:
+            #     print(l.line)
+            #     self.print_line(*l.line, fill=l.fill)
+
+            # use self.solutions
+            # vd = self.solutions[self.steps]
+            # if self.step_status == 0:  # CH
+            #     pass
+            # elif self.step_status == 1:  # merge CH
+            #     pass
+            # elif self.step_status == 2:  # 中垂線
+            #     pass
+            # elif self.step_status == 3:  # merge 中垂線
+            #     pass
+
+        self.steps += 1
+        if self.steps >= len(self.solutions):
+            self.steps = 0
 
 
 if __name__ == "__main__":
