@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>Voronoi Diagram</title>
+        <style>
+            @font-face {
+                font-family: 'genwan';
+                src: url('./fonts/GenWanMin-M.ttc');
+                font-weight: normal;
+            }
+            @font-face {
+                font-family: 'genwan';
+                src: url('./fonts/GenWanMin-SB.ttc');
+                font-weight: bold;
+            }
+            * {
+                font-family: 'genwan';
+                margin: 0;
+                padding: 0;
+                overflow-x: hidden;
+            }
+            .p {
+                height: 100vh;
+                width: 100vw;
+                background-color: #eee;
+            }
+            .container {
+                height: 100vh;
+                width: 60vw;
+                margin: 0 auto;
+                box-sizing: border-box;
+                padding: 5vh 0;
+            }
+
+            .p0::before {
+                z-index: 0;
+                content: '';
+                position: absolute;
+                top: 0;
+                left: 0;
+                width: 100vw;
+                height: 100vh;
+                background: linear-gradient(#fff7, #fff7), url(./img/title-bgimg.jpg);
+                background-position: center center;
+                background-size: 100%;
+            }
+            .p0 > .container {
+                position: relative;
+                display: grid;
+                justify-items: center;
+                align-items: center;
+            }
+            .p0 .title {
+                font-size: 8rem;
+                height: 20rem;
+            }
+            .p0 .author {
+                font-size: 1.5rem;
+            }
+            .title-wrapper {
+                text-align: right;
+                width: 60vw;
+                /* height: 40vh; */
+            }
+            .title-wrapper > * {
+                margin-bottom: 30px;
+            }
+        </style>
+        <link rel="stylesheet" href="side-bar.css" />
+    </head>
+    <body>
+        <div class="side-bar">
+            <div class="link-container">
+                <a href="#p0" class="title">Voronoi Diagram</a>
+                <a href="#p1">軟體規格書</a>
+                <a href="#p2">軟體說明</a>
+                <a href="#p3">程式設計</a>
+                <a href="#p4">軟體測試與實驗結果</a>
+                <a href="#p5">結論與心得</a>
+                <a href="#p6">附錄</a>
+            </div>
+        </div>
+        <div class="p p0" id="p0">
+            <div class="container">
+                <div class="title-wrapper">
+                    <h1 class="title">Voronoi<br />Diagram</h1>
+                    <h2 class="author">M103040083 李峮驊</h2>
+                </div>
+            </div>
+        </div>
+        <div class="p" id="p1">
+            <div class="container">
+                <h1>軟體規格書</h1>
+            </div>
+        </div>
+        <div class="p" id="p2">
+            <div class="container">
+                <h1>軟體說明</h1>
+            </div>
+        </div>
+        <div class="p" id="p3">
+            <div class="container">
+                <h1>程式設計</h1>
+            </div>
+        </div>
+        <div class="p" id="p4">
+            <div class="container">
+                <h1>軟體測試與實驗結果</h1>
+            </div>
+        </div>
+        <div class="p" id="p5">
+            <div class="container">
+                <h1>結論與心得</h1>
+            </div>
+        </div>
+        <div class="p" id="p6">
+            <div class="container">
+                <h1>附錄</h1>
+            </div>
+        </div>
+    </body>
+</html>
