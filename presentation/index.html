@@ -6,6 +6,10 @@
         <title>Voronoi Diagram</title>
         <style>
             @font-face {
+                font-family: 'Cascadia Code';
+                src: url('../fonts/CASCADIACODE.TTF');
+            }
+            @font-face {
                 font-family: 'genwan';
                 src: url('./fonts/GenWanMin-M.ttc');
                 font-weight: normal;
@@ -20,6 +24,12 @@
                 margin: 0;
                 padding: 0;
                 overflow-x: hidden;
+            }
+            code-block {
+                font-family: 'Cascadia Code';
+            }
+            code-block * {
+                font-family: 'Cascadia Code';
             }
             .p {
                 height: 100vh;
@@ -69,6 +79,8 @@
             }
         </style>
         <link rel="stylesheet" href="side-bar.css" />
+        <link rel="stylesheet" href="./style/vs.min.css" />
+        <script src="./html-code-block-element.common.min.js" defer></script>
     </head>
     <body>
         <div class="side-bar">
@@ -93,6 +105,16 @@
         <div class="p" id="p1">
             <div class="container">
                 <h1>軟體規格書</h1>
+                <code-block language="python">
+                    <textarea>
+
+class BisectionLine:
+    def __init__(self, line, p1, p2, fill=None) -> None:
+        self.line = line
+        self.p1 = p1
+        self.p2 = p2</textarea
+                    >
+                </code-block>
             </div>
         </div>
         <div class="p" id="p2">
