@@ -1,9 +1,9 @@
-"""檔案處理相關 function"""
+# functions for file processing
 
 from tkinter import filedialog as fd
 
 # 開測資
-def open_in_file(display_lb_text=None) -> list:
+def load_dataset(display_lb_text=None) -> list:
 
     filetypes = {("input files", "*.in"), ("all files", "*.*")}
     filename = fd.askopenfilename(title="選取檔案", initialdir="./", filetypes=filetypes)
@@ -41,9 +41,15 @@ def open_in_file(display_lb_text=None) -> list:
     return dataset
 
 
-def open_vd_file():
-    filetypes = {("voronoi diagram files", "*.vd"), ("all files", "*.*")}
-    filename = fd.askopenfilename(title="選取檔案", initialdir="./", filetypes=filetypes)
+def open_vd_graph():
+    filename = fd.askopenfilename(
+        title="選取檔案",
+        initialdir="./",
+        filetypes={
+            ("all files", "*.*"),
+            ("voronoi diagram files", "*.vd"),
+        },
+    )
 
     with open(filename, "r") as f:
         data = f.read()
@@ -67,10 +73,17 @@ def open_vd_file():
     return {"points": points, "lines": lines}
 
 
-def save_vd_file(contents: dict):
+def save_vd_graph(contents: dict):
     points = sorted(contents["points"])
     lines = sorted(contents["lines"])
-    f = fd.asksaveasfile(mode="w", defaultextension=".vd", filetypes={("voronoi diagram files", "*.vd"), ("all files", "*.*")})
+    f = fd.asksaveasfile(
+        mode="w",
+        defaultextension=".vd",
+        filetypes={
+            ("voronoi diagram files", "*.vd"),
+            ("all files", "*.*"),
+        },
+    )
 
     if f is None:
         print("save file failed")

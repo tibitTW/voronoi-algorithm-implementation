@@ -43,22 +43,22 @@ class sc:
     def init_sideframe_elements(self):
         self.file_path = StringVar()
         self.file_name_lb = ttk.Label(self.sideframe, textvariable=self.file_path)
-        self.read_file_btn = ttk.Button(self.sideframe, width=16, text="read file", command=self.read_dataset)
-        self.next_set_btn = ttk.Button(self.sideframe, width=16, text="next set", command=self.show_next_set)
+        self.load_file_btn = ttk.Button(self.sideframe, width=16, text="load file", command=self.read_dataset)
+        self.show_next_set_btn = ttk.Button(self.sideframe, width=16, text="next set", command=self.show_next_set)
         self.step_by_step_btn = ttk.Button(self.sideframe, width=16, text="step by step", command=self.step_by_step)  # TODO : commands
         self.run_btn = ttk.Button(self.sideframe, width=16, text="run", command=self.do_voronoi)
-        self.write_graph_file_btn = ttk.Button(self.sideframe, width=16, text="save image", command=self.save_graph)
-        self.read_graph_file_btn = ttk.Button(self.sideframe, width=16, text="read image", command=self.read_graph)
+        self.save_graph_file_btn = ttk.Button(self.sideframe, width=16, text="save image", command=self.save_graph)
+        self.load_graph_file_btn = ttk.Button(self.sideframe, width=16, text="load image", command=self.load_graph)
         self.clear_canvas_btn = ttk.Button(self.sideframe, width=16, text="clear canvas", command=self.clean)
 
     def init_sideframe_layout(self):
         self.file_name_lb.grid(row=0)
-        self.read_file_btn.grid(row=1)
-        self.next_set_btn.grid(row=2)
+        self.load_file_btn.grid(row=1)
+        self.show_next_set_btn.grid(row=2)
         self.run_btn.grid(row=3)
         self.step_by_step_btn.grid(row=4)
-        self.write_graph_file_btn.grid(row=5)
-        self.read_graph_file_btn.grid(row=6)
+        self.save_graph_file_btn.grid(row=5)
+        self.load_graph_file_btn.grid(row=6)
         self.clear_canvas_btn.grid(row=7)
 
     def canvas_mouse_click_event(self, event):
@@ -71,18 +71,18 @@ class sc:
 
     #################### file processing ####################
     def read_dataset(self):
-        self.dataset = fp.open_in_file(self.file_path)
+        self.dataset = fp.load_dataset(self.file_path)
         self.dataset_idx = -1
 
     def save_graph(self):
         self.graph_contents["points"].sort()
         self.graph_contents["lines"].sort()
-        fp.save_vd_file(self.graph_contents)
+        fp.save_vd_graph(self.graph_contents)
 
-    def read_graph(self):
+    def load_graph(self):
         self.clear_contents()
         self.clean_canvas()
-        self.graph_contents = fp.open_vd_file()
+        self.graph_contents = fp.open_vd_graph()
         self.print_graph(self.graph_contents)
 
     ####################### draw graph ######################
@@ -127,64 +127,11 @@ class sc:
             self.clean_canvas()
             self.clear_contents()
 
-    # TODO: 寫成 divide & conquer 解法
     def do_voronoi(self):
-        self.steps = -1
-        self.graph_contents["points"].sort()
-        solutions = do_vd(self.graph_contents["points"])
-
-        points = solutions[-1].CH_points
-
-        self.print_point(points[0][0], points[0][1], fill="red")
-        for i in range(len(points) - 1):
-            self.print_line(*points[i], *points[i + 1])
-        self.print_line(*points[-1], *points[0])
-        for p in points:
-            self.canvas.create_text(p[0], p[1], text=str(points.index(p)), anchor="nw")
-
-        lines = solutions[-1].CH_lines
-        for l in lines:
-            print(l.line)
-            self.print_line(*l.line, fill=l.fill)
+        pass
 
     def step_by_step(self):
-        if self.steps < 0:
-            self.graph_contents["points"].sort()
-            self.solutions = do_vd(self.graph_contents["points"])
-        else:
-            self.clean_canvas()
-            for p in self.graph_contents["points"]:
-                self.print_point(p[0], p[1])
-
-            points = self.solutions[self.steps].CH_points
-            for i in range(len(points) - 1):
-                self.print_line(*points[i], *points[i + 1])
-            self.print_line(*points[-1], *points[0])
-
-            for l in self.solutions[self.steps].CH_lines:
-                self.print_line(*l.line, fill=l.fill)
-            for l in self.solutions[self.steps].lines:
-                print(l)
-
-            # lines = self.solutions[self.steps].CH_lines
-            # for l in lines:
-            #     print(l.line)
-            #     self.print_line(*l.line, fill=l.fill)
-
-            # use self.solutions
-            # vd = self.solutions[self.steps]
-            # if self.step_status == 0:  # CH
-            #     pass
-            # elif self.step_status == 1:  # merge CH
-            #     pass
-            # elif self.step_status == 2:  # 中垂線
-            #     pass
-            # elif self.step_status == 3:  # merge 中垂線
-            #     pass
-
-        self.steps += 1
-        if self.steps >= len(self.solutions):
-            self.steps = 0
+        pass
 
 
 if __name__ == "__main__":
