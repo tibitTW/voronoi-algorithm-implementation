@@ -1,14 +1,13 @@
 # functions for file processing
-
 from tkinter import filedialog as fd
 
+from vd_algo import *
+
 # 開測資
-def load_dataset(display_lb_text=None) -> list:
+def load_dataset() -> list:
 
     filetypes = {("input files", "*.in"), ("all files", "*.*")}
     filename = fd.askopenfilename(title="選取檔案", initialdir="./", filetypes=filetypes)
-    if display_lb_text:
-        display_lb_text.set("using file:\n" + filename.split("/")[-1])
 
     with open(filename, "r", encoding="utf-8") as f:
         data = f.read()
@@ -28,20 +27,28 @@ def load_dataset(display_lb_text=None) -> list:
             set_size = int(data[i])
             i += 1
             pi = 0
-            contents = {"points": [], "lines": []}
+            points = []
             while pi < set_size:
                 if data[i] and data[i][0] != "#":
                     x, y = map(int, data[i].split(" "))
-                    contents["points"].append((x, y))
+                    p_tmp = Point(x, y)
+                    points.append(p_tmp)
 
                 pi += 1
                 i += 1
-            dataset.append(contents)
 
+            dataset.append(points)
+
+    print("Dataset loaded.")
+    for set_i, s in enumerate(dataset):
+        print(f"set {set_i+1}")
+        for p in s:
+            print(p)
+        print("---------------")
     return dataset
 
 
-def open_vd_graph():
+def open_vd_graph() -> Graph:
     filename = fd.askopenfilename(
         title="選取檔案",
         initialdir="./",
@@ -70,12 +77,22 @@ def open_vd_graph():
         else:
             print("format error!")
 
-    return {"points": points, "lines": lines}
+    return Graph(points, lines)
 
 
-def save_vd_graph(contents: dict):
-    points = sorted(contents["points"])
-    lines = sorted(contents["lines"])
+def save_vd_graph(graph: Graph):
+    print(graph)
+
+    # ================ sorting ================ #
+    graph.points.sort(key=lambda p: p.y)
+    graph.points.sort(key=lambda p: p.x)
+
+    graph.lines.sort(key=lambda l: l.p2.y)
+    graph.lines.sort(key=lambda l: l.p2.x)
+    graph.lines.sort(key=lambda l: l.p1.y)
+    graph.lines.sort(key=lambda l: l.p1.x)
+    # ========================================= #
+
     f = fd.asksaveasfile(
         mode="w",
         defaultextension=".vd",
@@ -86,13 +103,13 @@ def save_vd_graph(contents: dict):
     )
 
     if f is None:
-        print("save file failed")
+        print("file saving failed")
         return
 
-    for x, y in points:
-        f.write(f"P {x:.0f} {y:.0f}\n")
+    for p in graph.points:
+        f.write(f"P {p.x:.0f} {p.y:.0f}\n")
 
-    for x1, y1, x2, y2 in lines:
-        f.write(f"E {x1:.0f} {y1:.0f} {x2:.0f} {y2:.0f}\n")
+    for l in graph.lines:
+        f.write(f"E {l.p1.x:.0f} {l.p1.y:.0f} {l.p2.x:.0f} {l.p2.y:.0f}\n")
 
     f.close()
