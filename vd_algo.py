@@ -3,8 +3,20 @@ class Point:
         self.x = x
         self.y = y
 
+    def __add__(self, p):
+        return Point(self.x + p.x, self.y + p.y)
+
+    def __sub__(self, p):
+        return Point(self.x - p.x, self.y - p.y)
+
+    def __eq__(self, __o: object) -> bool:
+        return self.x == __o.x and self.y == __o.y
+
     def __str__(self) -> str:
         return f"({self.x}, {self.y})"
+
+    def __repr__(self) -> str:
+        return f"<Point>: ({self.x}, {self.y})"
 
 
 class Line:
@@ -16,74 +28,311 @@ class Line:
         return f"[{self.p1}, {self.p2}]"
 
 
-class Graph:
-    def __init__(self, points: list = None, lines: list = None, left_vd_lines: list = None, right_vd_lines: list = None, hyperplane: Line = None) -> None:
-        self.points = points if points else []
-        self.lines = lines if lines else []
-        self.left_vd_lines = left_vd_lines if left_vd_lines else []
-        self.right_vd_lines = right_vd_lines if right_vd_lines else []
-        self.hyperplane = hyperplane if hyperplane else None
-
-    def __str__(self) -> str:
-        return "\n".join(
-            [
-                "= = = = = Graph: = = = = =",
-                "points:",
-                "\n".join([f"{p}" for p in self.points]),
-                "lines:",
-                "\n".join([f"{l}" for l in self.lines]),
-            ]
-        )
-
-
 class VD:
-    def __init__(self, points=None, lines=None, inner_points=None, inner_lines=None):
+    def __init__(self, points=None, lines=None, convex_hull_points=None, inner_lines=None):
         self.points = points if points else []
-        self.lines = lines if lines else []
-        self.inner_points = inner_points if inner_points else []
+        self.lines = lines if lines else {}
+        self.convex_hull_points = convex_hull_points if convex_hull_points else []
         self.inner_lines = inner_lines if inner_lines else []
 
     def __str__(self) -> str:
         return "\n".join(
             (
                 "= = = = = Voronoi Diagram: = = = = =",
-                f"points: {self.points}",
-                f"lines: {self.lines}",
-                f"inner_points: {self.inner_points}",
-                f"inner_lines: {self.inner_lines}",
+                "points:",
+                "\n".join([f"{p}" for p in self.points]),
+                "lines:",
+                "\n".join([f"{self.lines[key]}" for key in self.lines]),
+                "convex hull points:",
+                "\n".join([f"{p}" for p in self.convex_hull_points]),
+                "inner lines:",
+                "\n".join([f"{l}" for l in self.inner_lines]),
+            )
+        )
+
+
+class Graph:
+    def __init__(self, points: list = None, lines: list = None, left_vd: VD = None, right_vd: VD = None, hyperplane: list = None) -> None:
+        self.points = points if points else []
+        self.lines = lines if lines else {}
+        self.left_vd = left_vd if left_vd else None
+        self.right_vd = right_vd if right_vd else None
+        self.hyperplane = hyperplane if hyperplane else []
+
+    def __str__(self) -> str:
+        return "\n".join(
+            (
+                "= = = = = Graph: = = = = =",
+                "points:",
+                "\n".join([f"{p}" for p in self.points]),
+                "lines:",
+                "\n".join([f"{self.lines[key]}" for key in self.lines]),
+                "left vd:",
+                f"{self.left_vd}",
+                "right vd:",
+                f"{self.right_vd}",
+                "hyperline:",
+                "\n".join([f"{l}" for l in self.hyperplane]),
             )
         )
 
 
 #################### mathematics functions ####################
+def get_bisection_line(p1: Point, p2: Point) -> Line:
+    center_point = ((p1.x + p2.x) / 2, (p1.y + p2.y) / 2)
+    line_vector = (p1.y - p2.y, p2.x - p1.x)
+
+    # get point 1 that outside the canvas
+    step = 0
+    while True:
+        step += 1
+        p_tmp = (
+            center_point[0] + step * line_vector[0],
+            center_point[1] + step * line_vector[1],
+        )
+        if p_tmp[0] < 0 or p_tmp[0] > 600 or p_tmp[1] < 0 or p_tmp[1] > 600:
+            break
+    line_p1 = Point(
+        center_point[0] + step * line_vector[0],
+        center_point[1] + step * line_vector[1],
+    )
+
+    # get point 2 that outside the canvas
+    step = 0
+    while True:
+        step -= 1
+        p_tmp = (
+            center_point[0] + step * line_vector[0],
+            center_point[1] + step * line_vector[1],
+        )
+        if p_tmp[0] < 0 or p_tmp[0] > 600 or p_tmp[1] < 0 or p_tmp[1] > 600:
+            break
+    line_p2 = Point(
+        center_point[0] + step * line_vector[0],
+        center_point[1] + step * line_vector[1],
+    )
+
+    return Line(line_p1, line_p2)
+
+
+def get_concurrent(l1: Line, l2: Line) -> Point:
+    n = ((l2.p1.y - l1.p1.y) * (l1.p2.x - l1.p1.x) - (l2.p1.x - l1.p1.x) * (l1.p2.y - l1.p1.y)) / (
+        (l2.p2.x - l2.p1.x) * (l1.p2.y - l1.p1.y) - (l2.p2.y - l2.p1.y) * (l1.p2.x - l1.p1.x)
+    )
+    return Point(
+        l2.p1.x + n * (l2.p2.x - l2.p1.x),
+        l2.p1.y + n * (l2.p2.y - l2.p1.y),
+    )
+
+
+def get_2_vector_cos(v1: Point, v2: Point):
+    return (v1.x * v2.x + v1.y * v2.y) / ((v1.x**2 + v1.y**2) ** 0.5 + (v2.x**2 + v2.y**2) ** 0.5)
+
 
 #################### voronoi diagram algorithms ####################
 def get_vd_steps(point_set):
-    if len(point_set) == 0:
-        return [Graph()]
-    elif len(point_set) == 1:
-        return [Graph(point_set)]
-
-    # saves every step
+    # records every step
     steps = []
 
-    # TODO
-    def merge_vd(left_vd, right_vd) -> VD:
-        result_vd = VD()
+    def merge_vd(left_vd: VD, right_vd: VD) -> VD:
+        result_vd = VD(points=left_vd.points + right_vd.points)
+        step_graph = Graph(points=left_vd.points + right_vd.points)
 
-        # save steps: left_vd, right_vd, hyperplane in graph
-        steps.append(result_vd)
+        # TODO 找 left_vd 及 right_vd 的上下切線點
+        left_top_point_idx = 0
+        left_bottom_point_idx = 0
+        right_top_point_idx = 0
+        right_bottom_point_idx = 0
+
+        steps.append(step_graph)
 
         return result_vd
 
-    # TODO
-    def do_vd(point_set) -> VD:
-        if len(point_set) == 0:
-            steps.append(Graph())
-            return
-        elif len(point_set) == 1:
-            steps.append(Graph(point_set))
-            return
+    def do_vd(point_set: list) -> VD:
+        if len(point_set) == 1:
+            return VD(points=point_set, convex_hull_points=point_set)
+
+        # 兩點 voronoi
+        if len(point_set) == 2:
+            bisection_line = get_bisection_line(*point_set)
+
+            result_vd = VD(points=point_set)
+            result_vd.convex_hull_points = point_set
+            result_vd.lines = {(f"{point_set[0]}", f"{point_set[1]}"): bisection_line}
+
+            step_graph = Graph(points=point_set)
+            step_graph.left_vd = result_vd
+
+            # save steps
+            steps.append(step_graph)
+            return result_vd
+
+        # 三點 voronoi
+        if len(point_set) == 3:
+            # corner case: 共線
+            if (
+                (point_set[0].x == point_set[1].x and point_set[1].x == point_set[2].x)
+                or (point_set[0].y == point_set[1].y and point_set[1].y == point_set[2].y)
+                or (
+                    (point_set[0].x != point_set[1].x)
+                    and (point_set[1].x != point_set[2].x)
+                    and (point_set[2].y - point_set[1].y) / (point_set[2].x - point_set[1].x)
+                    == (point_set[1].y - point_set[0].y) / (point_set[1].x - point_set[0].x)
+                )
+            ):
+                bisection_line01 = get_bisection_line(point_set[0], point_set[1])
+                bisection_line12 = get_bisection_line(point_set[1], point_set[2])
+
+                result_vd = VD(points=point_set)
+                result_vd.lines = {
+                    (f"{point_set[0]}", f"{point_set[1]}"): bisection_line01,
+                    (f"{point_set[1]}", f"{point_set[2]}"): bisection_line12,
+                }
+                result_vd.convex_hull_points = point_set
+
+                step_graph = Graph(points=point_set)
+                step_graph.left_vd = result_vd
+
+                # save steps
+                steps.append(step_graph)
+                return result_vd
+
+            # = = = = = = = = = = = = = = = = = = 順時針排序 = = = = = = = = = = = = = = = = = = #
+            if point_set[0].x == point_set[1].x:
+                point_set = [point_set[0], point_set[2], point_set[1]]
+            elif point_set[0].x != point_set[2].x:
+                slope_01 = (point_set[1].y - point_set[0].y) / (point_set[1].x - point_set[0].x)
+                slope_02 = (point_set[2].y - point_set[0].y) / (point_set[2].x - point_set[0].x)
+
+                # point1 比 point2 低
+                if slope_01 > slope_02:
+                    point_set = [point_set[0], point_set[2], point_set[1]]
+
+            # for p in point_set:
+            #     print(p)
+
+            # print("--------------")
+
+            # = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = #
+
+            bisection_line01 = get_bisection_line(point_set[0], point_set[1])
+            bisection_line12 = get_bisection_line(point_set[1], point_set[2])
+            bisection_line02 = get_bisection_line(point_set[0], point_set[2])
+
+            outer_center = get_concurrent(bisection_line01, bisection_line12)
+
+            squared_triangle_edges = (
+                (point_set[0].x - point_set[1].x) ** 2 + (point_set[0].y - point_set[1].y) ** 2,
+                (point_set[1].x - point_set[2].x) ** 2 + (point_set[1].y - point_set[2].y) ** 2,
+                (point_set[0].x - point_set[2].x) ** 2 + (point_set[0].y - point_set[2].y) ** 2,
+            )
+
+            # = = = = = = = = = = = = 鈍角三角形且外心超出畫面，只要畫兩條線 = = = = = = = = = = = = #
+            if (sum(squared_triangle_edges) // max(squared_triangle_edges) < 2) and (
+                outer_center.x > 600 or outer_center.x < 0 or outer_center.y > 600 or outer_center.y < 0
+            ):
+                result_vd = VD(points=point_set)
+                step_graph = Graph(points=point_set)
+
+                if max(squared_triangle_edges) == squared_triangle_edges[0]:
+                    print("type: 3 points 2 lines ")
+                    result_vd.lines = {
+                        (f"{point_set[1]}", f"{point_set[2]}"): bisection_line12,
+                        (f"{point_set[0]}", f"{point_set[2]}"): bisection_line02,
+                    }
+
+                elif max(squared_triangle_edges) == squared_triangle_edges[1]:
+                    result_vd.lines = {
+                        (f"{point_set[0]}", f"{point_set[1]}"): bisection_line01,
+                        (f"{point_set[0]}", f"{point_set[2]}"): bisection_line02,
+                    }
+
+                elif max(squared_triangle_edges) == squared_triangle_edges[2]:
+                    result_vd.lines = {
+                        (f"{point_set[0]}", f"{point_set[1]}"): bisection_line01,
+                        (f"{point_set[1]}", f"{point_set[2]}"): bisection_line12,
+                    }
+
+                result_vd.convex_hull_points = point_set
+                step_graph.left_vd = result_vd
+
+                # save steps
+                steps.append(step_graph)
+                return result_vd
+
+            result_vd = VD(points=point_set, convex_hull_points=point_set)
+            step_graph = Graph(points=point_set)
+
+            bisection_line01_tmp = get_bisection_line(point_set[0], point_set[1])
+            bisection_line12_tmp = get_bisection_line(point_set[1], point_set[2])
+            bisection_line02_tmp = get_bisection_line(point_set[0], point_set[2])
+
+            e01_center = Point((point_set[0].x + point_set[1].x) / 2, (point_set[0].y + point_set[1].y) / 2)
+            e12_center = Point((point_set[1].x + point_set[2].x) / 2, (point_set[1].y + point_set[2].y) / 2)
+            e02_center = Point((point_set[0].x + point_set[2].x) / 2, (point_set[0].y + point_set[2].y) / 2)
+
+            # 判斷 01 邊要取哪段線段, cos() < 0 代表夾角較大，為正確方向
+            if get_2_vector_cos(bisection_line01.p1 - outer_center, e01_center - outer_center) > 0:
+                bisection_line01_tmp.p2 = outer_center
+            else:
+                bisection_line01_tmp.p1 = outer_center
+
+            # 判斷 12 邊要取哪段線段, cos() < 0 代表夾角較大，為正確方向
+            if get_2_vector_cos(bisection_line12.p1 - outer_center, e12_center - outer_center) > 0:
+                bisection_line12_tmp.p2 = outer_center
+            else:
+                bisection_line12_tmp.p1 = outer_center
+
+            # 判斷 02 邊要取哪段線段, cos() < 0 代表夾角較大，為正確方向
+            if get_2_vector_cos(bisection_line02.p1 - outer_center, e02_center - outer_center) > 0:
+                bisection_line02_tmp.p2 = outer_center
+            else:
+                bisection_line02_tmp.p1 = outer_center
+
+            result_vd.lines = {
+                (f"{point_set[0]}", f"{point_set[1]}"): bisection_line01_tmp,
+                (f"{point_set[1]}", f"{point_set[2]}"): bisection_line12_tmp,
+                (f"{point_set[0]}", f"{point_set[2]}"): bisection_line02_tmp,
+            }
+            # = = = = = = = = = = = = = = = = = = = 鈍角三角形 = = = = = = = = = = = = = = = = = = = #
+            if sum(squared_triangle_edges) // max(squared_triangle_edges) < 2:
+                # 最長邊為 01
+                if max(squared_triangle_edges) == squared_triangle_edges[0]:
+                    print("type 01")
+                    bisection_line01_tmp = get_bisection_line(point_set[0], point_set[1])
+                    # 判斷 01 邊要取哪段線段, cos() < 0 代表夾角較大，為正確方向
+                    if get_2_vector_cos(bisection_line01_tmp.p1 - outer_center, e01_center - outer_center) < 0:
+                        bisection_line01_tmp.p2 = outer_center
+                    else:
+                        bisection_line01_tmp.p1 = outer_center
+                    result_vd.lines[(f"{point_set[0]}", f"{point_set[1]}")] = bisection_line01_tmp
+
+                # 最長邊為 12
+                elif max(squared_triangle_edges) == squared_triangle_edges[1]:
+                    print("type 12")
+                    bisection_line12_tmp = get_bisection_line(point_set[1], point_set[2])
+                    # 判斷 12 邊要取哪段線段, cos() < 0 代表夾角較大，為正確方向
+                    if get_2_vector_cos(bisection_line12_tmp.p1 - outer_center, e12_center - outer_center) < 0:
+                        bisection_line12_tmp.p2 = outer_center
+                    else:
+                        bisection_line12_tmp.p1 = outer_center
+                    result_vd.lines[(f"{point_set[1]}", f"{point_set[2]}")] = bisection_line12_tmp
+
+                # 最長邊為 02
+                elif max(squared_triangle_edges) == squared_triangle_edges[2]:
+                    print("type 02")
+                    bisection_line02_tmp = get_bisection_line(point_set[0], point_set[2])
+                    # 判斷 02 邊要取哪段線段, cos() < 0 代表夾角較大，為正確方向
+                    if get_2_vector_cos(bisection_line02_tmp.p1 - outer_center, e02_center - outer_center) < 0:
+                        bisection_line02_tmp.p2 = outer_center
+                    else:
+                        bisection_line02_tmp.p1 = outer_center
+                    result_vd.lines[(f"{point_set[0]}", f"{point_set[2]}")] = bisection_line02_tmp
+
+            step_graph.left_vd = result_vd
+            # save steps
+            steps.append(step_graph)
+            return result_vd
 
         left_points = point_set[: len(point_set) // 2]
         right_points = point_set[len(point_set) // 2 :]
@@ -92,6 +341,25 @@ def get_vd_steps(point_set):
 
         result_vd = merge_vd(left_vd, right_vd)
         return result_vd
+
+    # sort points
+    point_set.sort(key=lambda p: p.y)
+    point_set.sort(key=lambda p: p.x)
+
+    # remove repeat points
+    pi = 0
+    while pi < len(point_set) - 1:
+        if (point_set[pi].x == point_set[pi + 1].x) and (point_set[pi].y == point_set[pi + 1].y):
+            point_set.pop(pi)
+        else:
+            pi += 1
+
+    if len(point_set) == 0:
+        print("there's no point")
+        return [Graph()]
+    elif len(point_set) == 1:
+        print("there's only 1 point")
+        return [Graph(point_set)]
 
     do_vd(point_set)
 

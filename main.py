@@ -14,6 +14,10 @@ class sc:
         # main window
         self.root = Tk()
         self.root.title("Voronoi Algorithm")
+        # key binding
+        self.root.bind("<Key>", self.key_event)
+        # self.root.bind("<KeyPress>", self.key_event)
+        # self.root.bind("<KeyRelease>", self.key_event)
 
         # main frame
         self.mainframe = ttk.Frame(self.root, padding="10 10 10 10")
@@ -31,7 +35,7 @@ class sc:
         self.init_sideframe_layout()
 
         # store all points and lines on screen
-        self.current_graph = Graph(points=[], lines=[])
+        self.current_graph = Graph()
         # store point data read from file
         self.dataset = []
         self.dataset_idx = 0
@@ -45,12 +49,12 @@ class sc:
         self.dataset_idx_str = StringVar()
         self.dataset_idx_lb = ttk.Label(self.sideframe, textvariable=self.dataset_idx_str)
         self.load_file_btn = ttk.Button(self.sideframe, width=16, text="load dataset", command=self.read_dataset)
-        self.show_next_set_btn = ttk.Button(self.sideframe, width=16, text="next set", command=self.show_next_set)
+        self.show_next_set_btn = ttk.Button(self.sideframe, width=16, text="next set (n)", command=self.show_next_set)
         self.step_by_step_btn = ttk.Button(self.sideframe, width=16, text="step by step", command=self.step_by_step)
-        self.run_btn = ttk.Button(self.sideframe, width=16, text="run", command=self.do_voronoi)
+        self.run_btn = ttk.Button(self.sideframe, width=16, text="run (r)", command=self.do_voronoi)
         self.save_graph_file_btn = ttk.Button(self.sideframe, width=16, text="save graph", command=self.save_graph)
         self.load_graph_file_btn = ttk.Button(self.sideframe, width=16, text="load graph", command=self.load_graph)
-        self.clear_canvas_btn = ttk.Button(self.sideframe, width=16, text="clear canvas", command=self.clean_all)
+        self.clear_canvas_btn = ttk.Button(self.sideframe, width=16, text="clear canvas (c)", command=self.clean_all)
 
     def init_sideframe_layout(self):
         self.dataset_idx_lb.grid(row=0)
@@ -79,7 +83,8 @@ class sc:
         self.dataset_idx = 0
 
         self.clean_all()
-        self.print_graph(Graph(self.dataset[self.dataset_idx], []))
+        self.current_graph = Graph(self.dataset[self.dataset_idx])
+        self.print_graph(Graph(self.dataset[self.dataset_idx]))
         self.dataset_idx_str.set(f"Set [{self.dataset_idx+1}/{len(self.dataset)}]")
 
     def save_graph(self):
@@ -101,11 +106,50 @@ class sc:
         self.canvas.create_line(x1, y1, x2, y2, fill=fill)
 
     def print_graph(self, graph: Graph):
-        for p in graph.points:
-            self.print_point(p.x, p.y)
+        # print(graph)
+        if graph.points:
+            for p in graph.points:
+                self.print_point(p.x, p.y)
 
-        for l in graph.lines:
-            self.print_line(l.p1.x, l.p1.y, l.p2.x, l.p2.y)
+        if graph.lines:
+            if type(graph.lines) == list:
+                for l in graph.lines:
+                    self.print_line(l.p1.x, l.p1.y, l.p2.x, l.p2.y)
+            if type(graph.lines) == dict:
+                for key in graph.lines:
+                    self.print_line(
+                        graph.lines[key].p1.x,
+                        graph.lines[key].p1.y,
+                        graph.lines[key].p2.x,
+                        graph.lines[key].p2.y,
+                    )
+
+        # draw the left voronoi diagram
+        if graph.left_vd:
+            for p in graph.left_vd.points:
+                pass
+            for p in graph.left_vd.convex_hull_points:
+                pass
+
+            for key in graph.left_vd.lines:
+                self.print_line(
+                    graph.left_vd.lines[key].p1.x,
+                    graph.left_vd.lines[key].p1.y,
+                    graph.left_vd.lines[key].p2.x,
+                    graph.left_vd.lines[key].p2.y,
+                    fill="red",
+                )
+
+            for l in graph.left_vd.inner_lines:
+                self.print_line(l.p1.x, l.p1.y, l.p2.x, l.p2.y, fill="red")
+
+        if graph.right_vd:
+            pass
+            # draw the right voronoi diagram
+
+        if graph.hyperplane:
+            for l in graph.hyperplane:
+                self.print_line(l.p1.x, l.p1.y, l.p2.x, l.p2.y, fill="green")
 
     ######################## others ########################
     def clean_all(self):
@@ -115,35 +159,50 @@ class sc:
         self.steps_idx = 0
 
     def clear_contents(self):
-        self.current_graph.points = []
-        self.current_graph.lines = []
+        self.current_graph = Graph()
 
     def show_next_set(self):
+        if len(self.dataset) == 0:
+            print("no dataset!")
+            return
         self.dataset_idx += 1
-        if self.dataset_idx == len(self.dataset):
+        if self.dataset_idx >= len(self.dataset):
             self.dataset_idx = 0
 
-        self.current_graph = Graph(self.dataset[self.dataset_idx], [])
+        self.current_graph = Graph(self.dataset[self.dataset_idx])
         self.clear_canvas()
         self.print_graph(self.current_graph)
         self.dataset_idx_str.set(f"Set [{self.dataset_idx+1}/{len(self.dataset)}]")
         self.solution_steps = []
 
     def do_voronoi(self):
-        self.solution_steps = vd_algo.do_vd(self.dataset[self.dataset_idx])
+        self.solution_steps = vd_algo.get_vd_steps(self.current_graph.points)
+
+        # print(self.solution_steps)
+
         self.print_graph(self.solution_steps[-1])
         self.steps_idx = 0
 
     def step_by_step(self):
         if not self.solution_steps:
-            self.solution_steps = vd_algo.get_vd_steps(self.dataset[self.dataset_idx])
+            self.solution_steps = vd_algo.get_vd_steps(self.current_graph.points)
             self.steps_idx = 0
 
         self.clear_canvas()
         self.print_graph(self.solution_steps[self.steps_idx])
         self.steps_idx += 1
-        if self.steps_idx > len(self.solution_steps):
+        if self.steps_idx >= len(self.solution_steps):
             self.steps_idx = 0
+
+    def key_event(self, event):
+        if event.char == "n":
+            self.show_next_set()
+        elif event.char == "r":
+            self.do_voronoi()
+        elif event.char == "q":
+            self.root.quit()
+        elif event.char == "c":
+            self.clean_all()
 
 
 if __name__ == "__main__":
