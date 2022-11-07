@@ -136,16 +136,98 @@ def get_vd_steps(point_set):
 
     def merge_vd(left_vd: VD, right_vd: VD) -> VD:
         result_vd = VD(points=left_vd.points + right_vd.points)
-        step_graph = Graph(points=left_vd.points + right_vd.points)
+        step_graph = Graph()
+
+        hyperplane = []
 
         # TODO 找 left_vd 及 right_vd 的上下切線點
-        left_top_point_idx = 0
-        left_bottom_point_idx = 0
-        right_top_point_idx = 0
-        right_bottom_point_idx = 0
+        left_top_idx = 0
+        left_bottom_idx = 0
+        right_top_idx = 0
+        right_bottom_idx = 0
+
+        # 找上切點
+        is_loop = 2
+        while is_loop:
+            # TODO: corner case ()
+            next_left_top_idx = (left_top_idx + 1) % len(left_vd.convex_hull_points)
+            # 找到更好的切點
+            if (right_vd.convex_hull_points[right_top_idx].y - left_vd.convex_hull_points[left_top_idx].y) / (
+                right_vd.convex_hull_points[right_top_idx].x - left_vd.convex_hull_points[left_top_idx].x
+            ) < (right_vd.convex_hull_points[right_top_idx].y - left_vd.convex_hull_points[next_left_top_idx].y) / (
+                right_vd.convex_hull_points[right_top_idx].x - left_vd.convex_hull_points[next_left_top_idx].x
+            ):
+                left_top_idx = next_left_top_idx
+                left_next = True
+            else:
+                left_next = False
+
+            next_right_top_idx = (right_top_idx + 1) % len(right_vd.convex_hull_points)
+            # 找到更好的切點
+            if (left_vd.convex_hull_points[left_top_idx].y - right_vd.convex_hull_points[right_top_idx].y) / (
+                left_vd.convex_hull_points[left_top_idx].x - right_vd.convex_hull_points[right_top_idx].x
+            ) > (left_vd.convex_hull_points[left_top_idx].y - right_vd.convex_hull_points[next_right_top_idx].y) / (
+                left_vd.convex_hull_points[left_top_idx].x - right_vd.convex_hull_points[next_right_top_idx].x
+            ):
+                right_top_idx = next_right_top_idx
+                right_next = True
+            else:
+                right_next = False
+
+            if not left_next and not right_next:
+                is_loop -= 1
+            else:
+                is_loop = 2
+
+        # 找下切點
+        is_loop = 2
+        while is_loop:
+            # TODO: corner case ()
+            next_left_bottom_idx = (left_bottom_idx + 1) % len(left_vd.convex_hull_points)
+            # 找到更好的切點
+            if (right_vd.convex_hull_points[right_bottom_idx].y - left_vd.convex_hull_points[left_bottom_idx].y) / (
+                right_vd.convex_hull_points[right_bottom_idx].x - left_vd.convex_hull_points[left_bottom_idx].x
+            ) > (right_vd.convex_hull_points[right_bottom_idx].y - left_vd.convex_hull_points[next_left_bottom_idx].y) / (
+                right_vd.convex_hull_points[right_bottom_idx].x - left_vd.convex_hull_points[next_left_bottom_idx].x
+            ):
+                left_bottom_idx = next_left_bottom_idx
+                left_next = True
+            else:
+                left_next = False
+
+            next_right_bottom_idx = (right_bottom_idx + 1) % len(right_vd.convex_hull_points)
+            # 找到更好的切點
+            if (left_vd.convex_hull_points[left_bottom_idx].y - right_vd.convex_hull_points[right_bottom_idx].y) / (
+                left_vd.convex_hull_points[left_bottom_idx].x - right_vd.convex_hull_points[right_bottom_idx].x
+            ) < (left_vd.convex_hull_points[left_bottom_idx].y - right_vd.convex_hull_points[next_right_bottom_idx].y) / (
+                left_vd.convex_hull_points[left_bottom_idx].x - right_vd.convex_hull_points[next_right_bottom_idx].x
+            ):
+                right_bottom_idx = next_right_bottom_idx
+                right_next = True
+            else:
+                right_next = False
+
+            if not left_next and not right_next:
+                is_loop -= 1
+            else:
+                is_loop = 2
+
+        # TODO 找 hyperplane
+
+        # =============================== output results =============================== #
+        step_graph.left_vd = left_vd
+        step_graph.right_vd = right_vd
+        step_graph.hyperplane = hyperplane
 
         steps.append(step_graph)
 
+        # result_vd[(f"{left_vd[left_top_idx]}", f"{right_vd[right_top_idx]}")] = hyperplane[0]
+        # result_vd[(f"{left_vd[left_bottom_idx]}", f"{right_vd[right_bottom_idx]}")] = hyperplane[-1]
+        result_vd.convex_hull_points = (
+            left_vd.convex_hull_points[: left_top_idx + 1]
+            + right_vd.points[right_top_idx : right_bottom_idx + 1]
+            + left_vd.convex_hull_points[left_bottom_idx:]
+        )
         return result_vd
 
     def do_vd(point_set: list) -> VD:
@@ -298,7 +380,6 @@ def get_vd_steps(point_set):
             if sum(squared_triangle_edges) // max(squared_triangle_edges) < 2:
                 # 最長邊為 01
                 if max(squared_triangle_edges) == squared_triangle_edges[0]:
-                    print("type 01")
                     bisection_line01_tmp = get_bisection_line(point_set[0], point_set[1])
                     # 判斷 01 邊要取哪段線段, cos() < 0 代表夾角較大，為正確方向
                     if get_2_vector_cos(bisection_line01_tmp.p1 - outer_center, e01_center - outer_center) < 0:
@@ -309,7 +390,6 @@ def get_vd_steps(point_set):
 
                 # 最長邊為 12
                 elif max(squared_triangle_edges) == squared_triangle_edges[1]:
-                    print("type 12")
                     bisection_line12_tmp = get_bisection_line(point_set[1], point_set[2])
                     # 判斷 12 邊要取哪段線段, cos() < 0 代表夾角較大，為正確方向
                     if get_2_vector_cos(bisection_line12_tmp.p1 - outer_center, e12_center - outer_center) < 0:
@@ -320,7 +400,6 @@ def get_vd_steps(point_set):
 
                 # 最長邊為 02
                 elif max(squared_triangle_edges) == squared_triangle_edges[2]:
-                    print("type 02")
                     bisection_line02_tmp = get_bisection_line(point_set[0], point_set[2])
                     # 判斷 02 邊要取哪段線段, cos() < 0 代表夾角較大，為正確方向
                     if get_2_vector_cos(bisection_line02_tmp.p1 - outer_center, e02_center - outer_center) < 0:

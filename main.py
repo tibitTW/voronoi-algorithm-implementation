@@ -1,5 +1,6 @@
 """ $LAN=Python """
 
+import tkinter as tk
 from tkinter import *
 from tkinter import ttk
 from fractions import Fraction
@@ -50,7 +51,7 @@ class sc:
         self.dataset_idx_lb = ttk.Label(self.sideframe, textvariable=self.dataset_idx_str)
         self.load_file_btn = ttk.Button(self.sideframe, width=16, text="load dataset", command=self.read_dataset)
         self.show_next_set_btn = ttk.Button(self.sideframe, width=16, text="next set (n)", command=self.show_next_set)
-        self.step_by_step_btn = ttk.Button(self.sideframe, width=16, text="step by step", command=self.step_by_step)
+        self.step_by_step_btn = ttk.Button(self.sideframe, width=16, text="step by step (s)", command=self.step_by_step)
         self.run_btn = ttk.Button(self.sideframe, width=16, text="run (r)", command=self.do_voronoi)
         self.save_graph_file_btn = ttk.Button(self.sideframe, width=16, text="save graph", command=self.save_graph)
         self.load_graph_file_btn = ttk.Button(self.sideframe, width=16, text="load graph", command=self.load_graph)
@@ -102,7 +103,10 @@ class sc:
     def print_point(self, x: int, y: int, r: int = 3, fill="white", outline="black"):
         self.canvas.create_oval(x - r, y - r, x + r, y + r, fill=fill, outline=outline)
 
-    def print_line(self, x1: int, y1: int, x2: int, y2: int, fill="black"):
+    def print_line(self, x1: int, y1: int, x2: int, y2: int, fill="black", line_type=None):
+        if line_type == "arrow":
+            self.canvas.create_line(x1, y1, x2, y2, fill=fill, arrow=tk.LAST)
+
         self.canvas.create_line(x1, y1, x2, y2, fill=fill)
 
     def print_graph(self, graph: Graph):
@@ -128,8 +132,15 @@ class sc:
         if graph.left_vd:
             for p in graph.left_vd.points:
                 pass
-            for p in graph.left_vd.convex_hull_points:
-                pass
+            for i in range(len(graph.left_vd.convex_hull_points) - 1):
+                self.print_line(
+                    graph.left_vd.convex_hull_points[i].x,
+                    graph.left_vd.convex_hull_points[i].y,
+                    graph.left_vd.convex_hull_points[i + 1].x,
+                    graph.left_vd.convex_hull_points[i + 1].y,
+                    fill="grey",
+                    line_type="arrow",
+                )
 
             for key in graph.left_vd.lines:
                 self.print_line(
@@ -143,9 +154,31 @@ class sc:
             for l in graph.left_vd.inner_lines:
                 self.print_line(l.p1.x, l.p1.y, l.p2.x, l.p2.y, fill="red")
 
+        # draw the right voronoi diagram
         if graph.right_vd:
-            pass
-            # draw the right voronoi diagram
+            for p in graph.right_vd.points:
+                pass
+            for p in graph.right_vd.convex_hull_points:
+                self.print_line(
+                    graph.right_vd.convex_hull_points[i].x,
+                    graph.right_vd.convex_hull_points[i].y,
+                    graph.right_vd.convex_hull_points[i + 1].x,
+                    graph.right_vd.convex_hull_points[i + 1].y,
+                    fill="grey",
+                    line_type="arrow",
+                )
+
+            for key in graph.right_vd.lines:
+                self.print_line(
+                    graph.right_vd.lines[key].p1.x,
+                    graph.right_vd.lines[key].p1.y,
+                    graph.right_vd.lines[key].p2.x,
+                    graph.right_vd.lines[key].p2.y,
+                    fill="blue",
+                )
+
+            for l in graph.right_vd.inner_lines:
+                self.print_line(l.p1.x, l.p1.y, l.p2.x, l.p2.y, fill="blue")
 
         if graph.hyperplane:
             for l in graph.hyperplane:
@@ -188,6 +221,8 @@ class sc:
             self.solution_steps = vd_algo.get_vd_steps(self.current_graph.points)
             self.steps_idx = 0
 
+            # print(self.solution_steps)
+
         self.clear_canvas()
         self.print_graph(self.solution_steps[self.steps_idx])
         self.steps_idx += 1
@@ -203,6 +238,8 @@ class sc:
             self.root.quit()
         elif event.char == "c":
             self.clean_all()
+        elif event.char == "s":
+            self.step_by_step()
 
 
 if __name__ == "__main__":
