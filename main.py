@@ -131,8 +131,10 @@ class sc:
         # draw the left voronoi diagram
         if graph.left_vd:
             for p in graph.left_vd.points:
-                pass
-            for i in range(len(graph.left_vd.convex_hull_points) - 1):
+                self.print_point(p.x, p.y, fill="red", outline="red")
+
+            self.print_point(graph.left_vd.convex_hull_points[0].x, graph.left_vd.convex_hull_points[0].y, r=10, fill="", outline="red")
+            for i in range(-1, len(graph.left_vd.convex_hull_points) - 1):
                 self.print_line(
                     graph.left_vd.convex_hull_points[i].x,
                     graph.left_vd.convex_hull_points[i].y,
@@ -157,8 +159,10 @@ class sc:
         # draw the right voronoi diagram
         if graph.right_vd:
             for p in graph.right_vd.points:
-                pass
-            for p in graph.right_vd.convex_hull_points:
+                self.print_point(p.x, p.y, fill="blue", outline="blue")
+
+            self.print_point(graph.right_vd.convex_hull_points[0].x, graph.right_vd.convex_hull_points[0].y, r=10, fill="", outline="blue")
+            for i in range(-1, len(graph.right_vd.convex_hull_points) - 1):
                 self.print_line(
                     graph.right_vd.convex_hull_points[i].x,
                     graph.right_vd.convex_hull_points[i].y,
@@ -210,9 +214,7 @@ class sc:
 
     def do_voronoi(self):
         self.solution_steps = vd_algo.get_vd_steps(self.current_graph.points)
-
-        # print(self.solution_steps)
-
+        self.clear_canvas()
         self.print_graph(self.solution_steps[-1])
         self.steps_idx = 0
 
@@ -225,6 +227,9 @@ class sc:
 
         self.clear_canvas()
         self.print_graph(self.solution_steps[self.steps_idx])
+
+        print(self.solution_steps[self.steps_idx].left_vd.convex_hull_points)
+
         self.steps_idx += 1
         if self.steps_idx >= len(self.solution_steps):
             self.steps_idx = 0

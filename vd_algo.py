@@ -62,7 +62,7 @@ class Graph:
     def __str__(self) -> str:
         return "\n".join(
             (
-                "= = = = = Graph: = = = = =",
+                "= = = = = = = = = = = = = Graph: = = = = = = = = = = = = =",
                 "points:",
                 "\n".join([f"{p}" for p in self.points]),
                 "lines:",
@@ -73,6 +73,7 @@ class Graph:
                 f"{self.right_vd}",
                 "hyperline:",
                 "\n".join([f"{l}" for l in self.hyperplane]),
+                "\n",
             )
         )
 
@@ -129,6 +130,10 @@ def get_2_vector_cos(v1: Point, v2: Point):
     return (v1.x * v2.x + v1.y * v2.y) / ((v1.x**2 + v1.y**2) ** 0.5 + (v2.x**2 + v2.y**2) ** 0.5)
 
 
+def cross(po, pa, pb):
+    return (pa.x - po.x) * (pb.y - po.y) - (pa.y - po.y) * (pb.x - po.x)
+
+
 #################### voronoi diagram algorithms ####################
 def get_vd_steps(point_set):
     # records every step
@@ -140,77 +145,106 @@ def get_vd_steps(point_set):
 
         hyperplane = []
 
-        # TODO 找 left_vd 及 right_vd 的上下切線點
-        left_top_idx = 0
-        left_bottom_idx = 0
-        right_top_idx = 0
-        right_bottom_idx = 0
+        # = = = = = = = = = = = = 找 left_vd 及 right_vd 的上下切線點 = = = = = = = = = = = =  #
+
+        left_convex_hull_points_tmp = [p for p in left_vd.convex_hull_points]
+        # sort points
+        left_convex_hull_points_tmp.sort(key=lambda p: p.y)
+        left_convex_hull_points_tmp.sort(key=lambda p: p.x)
+
+        right_convex_hull_points_tmp = [p for p in right_vd.convex_hull_points]
+        # sort points
+        right_convex_hull_points_tmp.sort(key=lambda p: p.y)
+        right_convex_hull_points_tmp.sort(key=lambda p: p.x)
+
+        left_top_idx = left_bottom_idx = 0
+        while left_vd.convex_hull_points[left_top_idx] != left_convex_hull_points_tmp[-1]:
+            left_top_idx += 1
+            left_bottom_idx += 1
+
+        right_top_idx = right_bottom_idx = right_rightest_idx = 0
+        while right_vd.convex_hull_points[right_rightest_idx] != right_convex_hull_points_tmp[-1]:
+            right_rightest_idx += 1
 
         # 找上切點
-        is_loop = 2
-        while is_loop:
-            # TODO: corner case ()
-            next_left_top_idx = (left_top_idx + 1) % len(left_vd.convex_hull_points)
-            # 找到更好的切點
-            if (right_vd.convex_hull_points[right_top_idx].y - left_vd.convex_hull_points[left_top_idx].y) / (
-                right_vd.convex_hull_points[right_top_idx].x - left_vd.convex_hull_points[left_top_idx].x
-            ) < (right_vd.convex_hull_points[right_top_idx].y - left_vd.convex_hull_points[next_left_top_idx].y) / (
-                right_vd.convex_hull_points[right_top_idx].x - left_vd.convex_hull_points[next_left_top_idx].x
-            ):
-                left_top_idx = next_left_top_idx
-                left_next = True
-            else:
-                left_next = False
+        left_top_is_meet = right_top_is_meet = False
+        while (not left_top_is_meet) and (not right_top_is_meet):
+            left_top_idx_next = left_top_idx - 1
+            if left_top_idx_next < 0:
+                left_top_idx_next = len(left_vd.convex_hull_points) - 1
 
-            next_right_top_idx = (right_top_idx + 1) % len(right_vd.convex_hull_points)
-            # 找到更好的切點
-            if (left_vd.convex_hull_points[left_top_idx].y - right_vd.convex_hull_points[right_top_idx].y) / (
-                left_vd.convex_hull_points[left_top_idx].x - right_vd.convex_hull_points[right_top_idx].x
-            ) > (left_vd.convex_hull_points[left_top_idx].y - right_vd.convex_hull_points[next_right_top_idx].y) / (
-                left_vd.convex_hull_points[left_top_idx].x - right_vd.convex_hull_points[next_right_top_idx].x
+            if (
+                cross(
+                    right_vd.convex_hull_points[right_top_idx],
+                    left_vd.convex_hull_points[left_top_idx],
+                    left_vd.convex_hull_points[left_top_idx_next],
+                )
+                > 0
             ):
-                right_top_idx = next_right_top_idx
-                right_next = True
+                left_top_idx = left_top_idx_next
+                left_top_is_meet = False
             else:
-                right_next = False
+                left_top_is_meet = True
 
-            if not left_next and not right_next:
-                is_loop -= 1
+            right_top_idx_next = right_top_idx + 1
+            if right_top_idx_next >= len(right_vd.convex_hull_points):
+                right_top_idx_next = 0
+            if (
+                cross(
+                    left_vd.convex_hull_points[left_top_idx],
+                    right_vd.convex_hull_points[right_top_idx],
+                    right_vd.convex_hull_points[right_top_idx_next],
+                )
+                < 0
+            ):
+                right_top_idx = right_top_idx_next
+                left_top_is_meet = False
+                right_top_is_meet = False
             else:
-                is_loop = 2
+                right_top_is_meet = True
 
         # 找下切點
-        is_loop = 2
-        while is_loop:
-            # TODO: corner case ()
-            next_left_bottom_idx = (left_bottom_idx + 1) % len(left_vd.convex_hull_points)
-            # 找到更好的切點
-            if (right_vd.convex_hull_points[right_bottom_idx].y - left_vd.convex_hull_points[left_bottom_idx].y) / (
-                right_vd.convex_hull_points[right_bottom_idx].x - left_vd.convex_hull_points[left_bottom_idx].x
-            ) > (right_vd.convex_hull_points[right_bottom_idx].y - left_vd.convex_hull_points[next_left_bottom_idx].y) / (
-                right_vd.convex_hull_points[right_bottom_idx].x - left_vd.convex_hull_points[next_left_bottom_idx].x
-            ):
-                left_bottom_idx = next_left_bottom_idx
-                left_next = True
-            else:
-                left_next = False
+        left_bottom_is_meet = right_bottom_is_meet = False
+        while (not left_bottom_is_meet) and (not right_bottom_is_meet):
+            left_bottom_idx_next = left_bottom_idx + 1
+            if left_bottom_idx_next >= len(left_vd.convex_hull_points):
+                left_bottom_idx_next = 0
 
-            next_right_bottom_idx = (right_bottom_idx + 1) % len(right_vd.convex_hull_points)
-            # 找到更好的切點
-            if (left_vd.convex_hull_points[left_bottom_idx].y - right_vd.convex_hull_points[right_bottom_idx].y) / (
-                left_vd.convex_hull_points[left_bottom_idx].x - right_vd.convex_hull_points[right_bottom_idx].x
-            ) < (left_vd.convex_hull_points[left_bottom_idx].y - right_vd.convex_hull_points[next_right_bottom_idx].y) / (
-                left_vd.convex_hull_points[left_bottom_idx].x - right_vd.convex_hull_points[next_right_bottom_idx].x
+            if (
+                cross(
+                    right_vd.convex_hull_points[right_bottom_idx],
+                    left_vd.convex_hull_points[left_bottom_idx],
+                    left_vd.convex_hull_points[left_bottom_idx_next],
+                )
+                < 0
             ):
-                right_bottom_idx = next_right_bottom_idx
-                right_next = True
+                left_bottom_idx = left_bottom_idx_next
+                left_bottom_is_meet = False
             else:
-                right_next = False
+                left_bottom_is_meet = True
 
-            if not left_next and not right_next:
-                is_loop -= 1
+            right_bottom_idx_next = right_bottom_idx - 1
+            if right_bottom_idx_next < 0:
+                right_bottom_idx_next = len(right_vd.convex_hull_points) - 1
+            if (
+                cross(
+                    left_vd.convex_hull_points[left_bottom_idx],
+                    right_vd.convex_hull_points[right_bottom_idx],
+                    right_vd.convex_hull_points[right_bottom_idx_next],
+                )
+                > 0
+            ):
+                right_bottom_idx = right_bottom_idx_next
+                left_bottom_is_meet = False
+                right_bottom_is_meet = False
             else:
-                is_loop = 2
+                right_bottom_is_meet = True
+
+        print("left_top_idx:", left_top_idx)
+        print("left_bottom_idx:", left_bottom_idx)
+        print("right_top_idx:", right_top_idx)
+        print("right_bottom_idx:", right_bottom_idx)
+        print()
 
         # TODO 找 hyperplane
 
@@ -223,11 +257,22 @@ def get_vd_steps(point_set):
 
         # result_vd[(f"{left_vd[left_top_idx]}", f"{right_vd[right_top_idx]}")] = hyperplane[0]
         # result_vd[(f"{left_vd[left_bottom_idx]}", f"{right_vd[right_bottom_idx]}")] = hyperplane[-1]
-        result_vd.convex_hull_points = (
-            left_vd.convex_hull_points[: left_top_idx + 1]
-            + right_vd.points[right_top_idx : right_bottom_idx + 1]
-            + left_vd.convex_hull_points[left_bottom_idx:]
-        )
+
+        # print("\n".join([f"l {i}" for i in range(left_top_idx + 1)]))
+        # print("\n".join([f"r {i}" for i in range(right_top_idx, right_bottom_idx + 1)]))
+        # print("\n".join([f"l {i}" for i in range(left_bottom_idx, len(left_vd.convex_hull_points))]))
+
+        result_vd.convex_hull_points = []
+        result_vd.convex_hull_points += left_vd.convex_hull_points[: left_top_idx + 1]
+        if right_top_idx > right_bottom_idx:
+            result_vd.convex_hull_points += right_vd.convex_hull_points[right_top_idx:] + right_vd.convex_hull_points[: right_bottom_idx + 1]
+        else:
+            result_vd.convex_hull_points += right_vd.convex_hull_points[right_top_idx : right_bottom_idx + 1]
+        if left_bottom_idx != 0:
+            result_vd.convex_hull_points += left_vd.convex_hull_points[left_bottom_idx:]
+
+        step_graph = Graph(left_vd=result_vd)
+        steps.append(step_graph)
         return result_vd
 
     def do_vd(point_set: list) -> VD:
@@ -317,7 +362,7 @@ def get_vd_steps(point_set):
                 step_graph = Graph(points=point_set)
 
                 if max(squared_triangle_edges) == squared_triangle_edges[0]:
-                    print("type: 3 points 2 lines ")
+                    # print("type: 3 points 2 lines ")
                     result_vd.lines = {
                         (f"{point_set[1]}", f"{point_set[2]}"): bisection_line12,
                         (f"{point_set[0]}", f"{point_set[2]}"): bisection_line02,
@@ -411,6 +456,9 @@ def get_vd_steps(point_set):
             step_graph.left_vd = result_vd
             # save steps
             steps.append(step_graph)
+
+            # print(result_vd)
+
             return result_vd
 
         left_points = point_set[: len(point_set) // 2]
@@ -434,10 +482,10 @@ def get_vd_steps(point_set):
             pi += 1
 
     if len(point_set) == 0:
-        print("there's no point")
+        # print("there's no point")
         return [Graph()]
     elif len(point_set) == 1:
-        print("there's only 1 point")
+        # print("there's only 1 point")
         return [Graph(point_set)]
 
     do_vd(point_set)
