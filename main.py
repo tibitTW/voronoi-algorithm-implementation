@@ -133,13 +133,13 @@ class sc:
             for p in graph.left_vd.points:
                 self.print_point(p.x, p.y, fill="red", outline="red")
 
-            self.print_point(graph.left_vd.convex_hull_points[0].x, graph.left_vd.convex_hull_points[0].y, r=10, fill="", outline="red")
-            for i in range(-1, len(graph.left_vd.convex_hull_points) - 1):
+            self.print_point(graph.left_vd.CH_points[0].x, graph.left_vd.CH_points[0].y, r=10, fill="", outline="red")
+            for i in range(-1, len(graph.left_vd.CH_points) - 1):
                 self.print_line(
-                    graph.left_vd.convex_hull_points[i].x,
-                    graph.left_vd.convex_hull_points[i].y,
-                    graph.left_vd.convex_hull_points[i + 1].x,
-                    graph.left_vd.convex_hull_points[i + 1].y,
+                    graph.left_vd.CH_points[i].x,
+                    graph.left_vd.CH_points[i].y,
+                    graph.left_vd.CH_points[i + 1].x,
+                    graph.left_vd.CH_points[i + 1].y,
                     fill="grey",
                     line_type="arrow",
                 )
@@ -161,13 +161,13 @@ class sc:
             for p in graph.right_vd.points:
                 self.print_point(p.x, p.y, fill="blue", outline="blue")
 
-            self.print_point(graph.right_vd.convex_hull_points[0].x, graph.right_vd.convex_hull_points[0].y, r=10, fill="", outline="blue")
-            for i in range(-1, len(graph.right_vd.convex_hull_points) - 1):
+            self.print_point(graph.right_vd.CH_points[0].x, graph.right_vd.CH_points[0].y, r=10, fill="", outline="blue")
+            for i in range(-1, len(graph.right_vd.CH_points) - 1):
                 self.print_line(
-                    graph.right_vd.convex_hull_points[i].x,
-                    graph.right_vd.convex_hull_points[i].y,
-                    graph.right_vd.convex_hull_points[i + 1].x,
-                    graph.right_vd.convex_hull_points[i + 1].y,
+                    graph.right_vd.CH_points[i].x,
+                    graph.right_vd.CH_points[i].y,
+                    graph.right_vd.CH_points[i + 1].x,
+                    graph.right_vd.CH_points[i + 1].y,
                     fill="grey",
                     line_type="arrow",
                 )
@@ -228,7 +228,7 @@ class sc:
         self.clear_canvas()
         self.print_graph(self.solution_steps[self.steps_idx])
 
-        print(self.solution_steps[self.steps_idx].left_vd.convex_hull_points)
+        print(self.solution_steps[self.steps_idx].left_vd.CH_points)
 
         self.steps_idx += 1
         if self.steps_idx >= len(self.solution_steps):
