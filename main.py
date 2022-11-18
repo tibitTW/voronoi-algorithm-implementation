@@ -104,9 +104,17 @@ class sc:
         self.canvas.create_oval(x - r, y - r, x + r, y + r, fill=fill, outline=outline)
 
     def print_line(self, x1: int, y1: int, x2: int, y2: int, fill="black", line_type=None):
-        if line_type == "arrow":
-            self.canvas.create_line(x1, y1, x2, y2, fill=fill, arrow=tk.LAST)
-
+        if line_type == "ch_line":
+            self.canvas.create_line(
+                x1,
+                y1,
+                x2,
+                y2,
+                fill="grey",
+                # arrow=tk.LAST,
+                dash=(2, 2),
+            )
+            return
         self.canvas.create_line(x1, y1, x2, y2, fill=fill)
 
     def print_graph(self, graph: Graph):
@@ -140,8 +148,7 @@ class sc:
                     graph.left_vd.CH_points[i].y,
                     graph.left_vd.CH_points[i + 1].x,
                     graph.left_vd.CH_points[i + 1].y,
-                    fill="grey",
-                    line_type="arrow",
+                    line_type="ch_line",
                 )
 
             for key in graph.left_vd.lines:
@@ -152,9 +159,6 @@ class sc:
                     graph.left_vd.lines[key].p2.y,
                     fill="red",
                 )
-
-            for l in graph.left_vd.inner_lines:
-                self.print_line(l.p1.x, l.p1.y, l.p2.x, l.p2.y, fill="red")
 
         # draw the right voronoi diagram
         if graph.right_vd:
@@ -168,8 +172,7 @@ class sc:
                     graph.right_vd.CH_points[i].y,
                     graph.right_vd.CH_points[i + 1].x,
                     graph.right_vd.CH_points[i + 1].y,
-                    fill="grey",
-                    line_type="arrow",
+                    line_type="ch_line",
                 )
 
             for key in graph.right_vd.lines:
@@ -181,12 +184,10 @@ class sc:
                     fill="blue",
                 )
 
-            for l in graph.right_vd.inner_lines:
-                self.print_line(l.p1.x, l.p1.y, l.p2.x, l.p2.y, fill="blue")
-
         if graph.hyperplane:
-            for l in graph.hyperplane:
-                self.print_line(l.p1.x, l.p1.y, l.p2.x, l.p2.y, fill="green")
+
+            for key in graph.hyperplane:
+                self.print_line(graph.hyperplane[key].p1.x, graph.hyperplane[key].p1.y, graph.hyperplane[key].p2.x, graph.hyperplane[key].p2.y, fill="green")
 
     ######################## others ########################
     def clean_all(self):

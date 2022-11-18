@@ -1,3 +1,4 @@
+# ===================================== data structure ===================================== #
 class Point:
     def __init__(self, x, y) -> None:
         self.x = x
@@ -16,24 +17,26 @@ class Point:
         return f"({self.x}, {self.y})"
 
     def __repr__(self) -> str:
-        return f"<Point>: ({self.x}, {self.y})"
+        return f"<Point>: {self.__str__()}"
 
 
 class Line:
     def __init__(self, p1: Point, p2: Point) -> None:
-        self.p1 = p1
-        self.p2 = p2
+        self.p1 = p1 if type(p1) == Point else Point(*p1)
+        self.p2 = p2 if type(p2) == Point else Point(*p2)
 
     def __str__(self) -> str:
         return f"[{self.p1}, {self.p2}]"
 
+    def __repr__(self) -> str:
+        return f"<Line>: {self.__str__()}"
+
 
 class VD:
-    def __init__(self, points=None, lines=None, CH_points=None, inner_lines=None):
+    def __init__(self, points=None, lines=None, CH_points=None):
         self.points = points if points else []
         self.lines = lines if lines else {}
         self.CH_points = CH_points if CH_points else []
-        self.inner_lines = inner_lines if inner_lines else []
 
     def __str__(self) -> str:
         return "\n".join(
@@ -45,8 +48,6 @@ class VD:
                 "\n".join([f"{self.lines[key]}" for key in self.lines]),
                 "convex hull points:",
                 "\n".join([f"{p}" for p in self.CH_points]),
-                "inner lines:",
-                "\n".join([f"{l}" for l in self.inner_lines]),
             )
         )
 
@@ -78,7 +79,7 @@ class Graph:
         )
 
 
-#################### mathematics functions ####################
+# ===================================== mathematics functions ===================================== #
 def get_bisection_line(p1: Point, p2: Point) -> Line:
     center_point = ((p1.x + p2.x) / 2, (p1.y + p2.y) / 2)
     line_vector = (p1.y - p2.y, p2.x - p1.x)
@@ -134,7 +135,7 @@ def cross(po, pa, pb):
     return (pa.x - po.x) * (pb.y - po.y) - (pa.y - po.y) * (pb.x - po.x)
 
 
-#################### voronoi diagram algorithms ####################
+# ===================================== voronoi diagram algorithms ===================================== #
 def get_vd_steps(point_set):
     # records every step
     steps = []
@@ -240,22 +241,169 @@ def get_vd_steps(point_set):
             else:
                 right_bottom_is_meet = True
 
-        # TODO 找 hyperplane
+        # ============================= TODO 找 hyperplane ============================= #
+        left_i = left_top_idx
+        left_i_next = left_i + 1
+        if left_i_next >= len(left_vd.CH_points):
+            left_i_next = 0
+
+        right_i = right_top_idx
+        right_i_next = right_i - 1
+        if right_i_next < 0:
+            right_i_next = len(right_vd.CH_points) - 1
+
+        hyperplanes = {}
+        hyperplane_line_tmp = get_bisection_line(
+            left_vd.CH_points[left_top_idx],
+            right_vd.CH_points[right_top_idx],
+        )
+
+        # switch 2 points, makes p1 always upper than p2
+        if hyperplane_line_tmp.p1.y > hyperplane_line_tmp.p2.y:
+            hyperplane_line_tmp.p1, hyperplane_line_tmp.p2 = hyperplane_line_tmp.p2, hyperplane_line_tmp.p1
+
+        last_concurrent = Point(-1, -1)
+        left_done = right_done = False
+
+        while not (left_done and right_done):
+
+            # find concorrent point between hyperplane & right VD
+            if left_done:
+                print("left done")
+                for key in right_vd.lines:
+                    if (str(right_vd.CH_points[right_i]) in key) and (str(right_vd.CH_points[right_i_next]) in key):
+                        right_line_key = key
+                        break
+
+                concurrent = get_concurrent(hyperplane_line_tmp, right_vd.lines[right_line_key])
+                last_concurrent = concurrent
+                hyperplane_line_tmp.p2 = concurrent
+                hyperplanes[(str(hyperplane_line_tmp.p1), str(hyperplane_line_tmp.p2))] = hyperplane_line_tmp
+                hyperplane_line_tmp = get_bisection_line(left_vd.CH_points[left_i], right_vd.CH_points[right_i_next])
+
+                # switch 2 points, makes p1 always upper than p2
+                if hyperplane_line_tmp.p1.y > hyperplane_line_tmp.p2.y:
+                    hyperplane_line_tmp.p1, hyperplane_line_tmp.p2 = hyperplane_line_tmp.p2, hyperplane_line_tmp.p1
+
+                hyperplane_line_tmp.p1 = concurrent
+
+                # update right_i & right_i_next
+                right_i = right_i_next
+                right_i_next = right_i - 1
+                if right_i_next < 0:
+                    right_i_next = len(right_vd.CH_points) - 1
+
+            # find concorrent point between hyperplane & left VD
+            elif right_done:
+                print("right done")
+                for key in left_vd.lines:
+                    if (str(left_vd.CH_points[left_i]) in key) and (str(left_vd.CH_points[left_i_next]) in key):
+                        left_line_key = key
+                        break
+
+                concurrent = get_concurrent(hyperplane_line_tmp, left_vd.lines[left_line_key])
+                last_concurrent = concurrent
+                hyperplane_line_tmp.p2 = concurrent
+                hyperplanes[(str(hyperplane_line_tmp.p1), str(hyperplane_line_tmp.p2))] = hyperplane_line_tmp
+                hyperplane_line_tmp = get_bisection_line(right_vd.CH_points[right_i], left_vd.CH_points[left_i_next])
+
+                # switch 2 points, makes p1 always upper than p2
+                if hyperplane_line_tmp.p1.y > hyperplane_line_tmp.p2.y:
+                    hyperplane_line_tmp.p1, hyperplane_line_tmp.p2 = hyperplane_line_tmp.p2, hyperplane_line_tmp.p1
+
+                hyperplane_line_tmp.p1 = concurrent
+
+                # update left_i & left_i_next
+                left_i = left_i_next
+                left_i_next = left_i + 1
+                if left_i_next >= len(left_vd.CH_points):
+                    left_i_next = 0
+
+            # compare left concorrent point & right concorrent point
+            else:
+                print("comparing left & right")
+                for key in left_vd.lines:
+                    if (str(left_vd.CH_points[left_i]) in key) and (str(left_vd.CH_points[left_i_next]) in key):
+                        left_line_key = key
+                        break
+
+                for key in right_vd.lines:
+                    if (str(right_vd.CH_points[right_i]) in key) and (str(right_vd.CH_points[right_i_next]) in key):
+                        right_line_key = key
+                        break
+
+                left_concurrent = get_concurrent(hyperplane_line_tmp, left_vd.lines[left_line_key])
+                right_concurrent = get_concurrent(hyperplane_line_tmp, right_vd.lines[right_line_key])
+
+                if left_concurrent.y < right_concurrent.y:
+                    print("use left")
+                    hyperplane_line_tmp.p2 = left_concurrent
+                    last_concurrent = left_concurrent
+
+                    hyperplanes[(str(hyperplane_line_tmp.p1), str(hyperplane_line_tmp.p2))] = hyperplane_line_tmp
+                    hyperplane_line_tmp = get_bisection_line(right_vd.CH_points[right_i], left_vd.CH_points[left_i_next])
+
+                    # switch 2 points, makes p1 always upper than p2
+                    if hyperplane_line_tmp.p1.y > hyperplane_line_tmp.p2.y:
+                        hyperplane_line_tmp.p1, hyperplane_line_tmp.p2 = hyperplane_line_tmp.p2, hyperplane_line_tmp.p1
+
+                    hyperplane_line_tmp.p1 = left_concurrent
+
+                    # update left_i & left_i_next
+                    left_i = left_i_next
+                    left_i_next = left_i + 1
+                    if left_i_next >= len(left_vd.CH_points):
+                        left_i_next = 0
+
+                else:
+                    print("use right")
+                    hyperplane_line_tmp.p2 = right_concurrent
+                    last_concurrent = right_concurrent
+
+                    hyperplanes[(str(hyperplane_line_tmp.p1), str(hyperplane_line_tmp.p2))] = hyperplane_line_tmp
+                    hyperplane_line_tmp = get_bisection_line(left_vd.CH_points[left_i], right_vd.CH_points[right_i_next])
+
+                    # switch 2 points, makes p1 always upper than p2
+                    if hyperplane_line_tmp.p1.y > hyperplane_line_tmp.p2.y:
+                        hyperplane_line_tmp.p1, hyperplane_line_tmp.p2 = hyperplane_line_tmp.p2, hyperplane_line_tmp.p1
+
+                    hyperplane_line_tmp.p1 = right_concurrent
+
+                    # update right_i & right_i_next
+                    right_i = right_i_next
+                    right_i_next = right_i - 1
+                    if right_i_next < 0:
+                        right_i_next = len(right_vd.CH_points) - 1
+
+            # print("left_i:", left_i)
+            # print("left_bottom_idx:", left_bottom_idx)
+            # print("right_i:", right_i)
+            # print("right_bottom_idx:", right_bottom_idx)
+
+            # update loop controller
+            if left_i == left_bottom_idx:
+                left_done = True
+            if right_i == right_bottom_idx:
+                right_done = True
+
+        hyperplane_line_tmp = get_bisection_line(left_vd.CH_points[left_bottom_idx], right_vd.CH_points[right_bottom_idx])
+        # switch 2 points, makes p1 always upper than p2
+        if hyperplane_line_tmp.p1.y > hyperplane_line_tmp.p2.y:
+            hyperplane_line_tmp.p1, hyperplane_line_tmp.p2 = hyperplane_line_tmp.p2, hyperplane_line_tmp.p1
+
+        hyperplane_line_tmp.p1 = last_concurrent
+        hyperplanes[(str(hyperplane_line_tmp.p1), str(hyperplane_line_tmp.p2))] = hyperplane_line_tmp
 
         # =============================== output results =============================== #
         step_graph.left_vd = left_vd
         step_graph.right_vd = right_vd
-        step_graph.hyperplane = hyperplane
+        step_graph.hyperplane = hyperplanes
 
         steps.append(step_graph)
 
-        # result_vd[(f"{left_vd[left_top_idx]}", f"{right_vd[right_top_idx]}")] = hyperplane[0]
-        # result_vd[(f"{left_vd[left_bottom_idx]}", f"{right_vd[right_bottom_idx]}")] = hyperplane[-1]
+        result_vd.lines = {**result_vd.lines, **hyperplanes}
 
-        # print("\n".join([f"l {i}" for i in range(left_top_idx + 1)]))
-        # print("\n".join([f"r {i}" for i in range(right_top_idx, right_bottom_idx + 1)]))
-        # print("\n".join([f"l {i}" for i in range(left_bottom_idx, len(left_vd.CH_points))]))
-
+        # update convex hull points of result voronoi diagram
         result_vd.CH_points = []
         result_vd.CH_points += left_vd.CH_points[: left_top_idx + 1]
         if right_top_idx > right_bottom_idx:
@@ -279,7 +427,7 @@ def get_vd_steps(point_set):
 
             result_vd = VD(points=point_set)
             result_vd.CH_points = point_set
-            result_vd.lines = {(f"{point_set[0]}", f"{point_set[1]}"): bisection_line}
+            result_vd.lines = {(str(point_set[0]), str(point_set[1])): bisection_line}
 
             step_graph = Graph(points=point_set)
             step_graph.left_vd = result_vd
@@ -306,8 +454,8 @@ def get_vd_steps(point_set):
 
                 result_vd = VD(points=point_set)
                 result_vd.lines = {
-                    (f"{point_set[0]}", f"{point_set[1]}"): bisection_line01,
-                    (f"{point_set[1]}", f"{point_set[2]}"): bisection_line12,
+                    (str(point_set[0]), str(point_set[1])): bisection_line01,
+                    (str(point_set[1]), str(point_set[2])): bisection_line12,
                 }
                 result_vd.CH_points = point_set
 
@@ -358,20 +506,20 @@ def get_vd_steps(point_set):
                 if max(squared_triangle_edges) == squared_triangle_edges[0]:
                     # print("type: 3 points 2 lines ")
                     result_vd.lines = {
-                        (f"{point_set[1]}", f"{point_set[2]}"): bisection_line12,
-                        (f"{point_set[0]}", f"{point_set[2]}"): bisection_line02,
+                        (str(point_set[1]), str(point_set[2])): bisection_line12,
+                        (str(point_set[0]), str(point_set[2])): bisection_line02,
                     }
 
                 elif max(squared_triangle_edges) == squared_triangle_edges[1]:
                     result_vd.lines = {
-                        (f"{point_set[0]}", f"{point_set[1]}"): bisection_line01,
-                        (f"{point_set[0]}", f"{point_set[2]}"): bisection_line02,
+                        (str(point_set[0]), str(point_set[1])): bisection_line01,
+                        (str(point_set[0]), str(point_set[2])): bisection_line02,
                     }
 
                 elif max(squared_triangle_edges) == squared_triangle_edges[2]:
                     result_vd.lines = {
-                        (f"{point_set[0]}", f"{point_set[1]}"): bisection_line01,
-                        (f"{point_set[1]}", f"{point_set[2]}"): bisection_line12,
+                        (str(point_set[0]), str(point_set[1])): bisection_line01,
+                        (str(point_set[1]), str(point_set[2])): bisection_line12,
                     }
 
                 result_vd.CH_points = point_set
@@ -411,9 +559,9 @@ def get_vd_steps(point_set):
                 bisection_line02_tmp.p1 = outer_center
 
             result_vd.lines = {
-                (f"{point_set[0]}", f"{point_set[1]}"): bisection_line01_tmp,
-                (f"{point_set[1]}", f"{point_set[2]}"): bisection_line12_tmp,
-                (f"{point_set[0]}", f"{point_set[2]}"): bisection_line02_tmp,
+                (str(point_set[0]), str(point_set[1])): bisection_line01_tmp,
+                (str(point_set[1]), str(point_set[2])): bisection_line12_tmp,
+                (str(point_set[0]), str(point_set[2])): bisection_line02_tmp,
             }
             # = = = = = = = = = = = = = = = = = = = 鈍角三角形 = = = = = = = = = = = = = = = = = = = #
             if sum(squared_triangle_edges) // max(squared_triangle_edges) < 2:
@@ -425,7 +573,7 @@ def get_vd_steps(point_set):
                         bisection_line01_tmp.p2 = outer_center
                     else:
                         bisection_line01_tmp.p1 = outer_center
-                    result_vd.lines[(f"{point_set[0]}", f"{point_set[1]}")] = bisection_line01_tmp
+                    result_vd.lines[(str(point_set[0]), str(point_set[1]))] = bisection_line01_tmp
 
                 # 最長邊為 12
                 elif max(squared_triangle_edges) == squared_triangle_edges[1]:
@@ -435,7 +583,7 @@ def get_vd_steps(point_set):
                         bisection_line12_tmp.p2 = outer_center
                     else:
                         bisection_line12_tmp.p1 = outer_center
-                    result_vd.lines[(f"{point_set[1]}", f"{point_set[2]}")] = bisection_line12_tmp
+                    result_vd.lines[(str(point_set[1]), str(point_set[2]))] = bisection_line12_tmp
 
                 # 最長邊為 02
                 elif max(squared_triangle_edges) == squared_triangle_edges[2]:
@@ -445,7 +593,7 @@ def get_vd_steps(point_set):
                         bisection_line02_tmp.p2 = outer_center
                     else:
                         bisection_line02_tmp.p1 = outer_center
-                    result_vd.lines[(f"{point_set[0]}", f"{point_set[2]}")] = bisection_line02_tmp
+                    result_vd.lines[(str(point_set[0]), str(point_set[2]))] = bisection_line02_tmp
 
             step_graph.left_vd = result_vd
             # save steps
