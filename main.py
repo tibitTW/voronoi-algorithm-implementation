@@ -71,7 +71,7 @@ class sc:
         p_tmp = Point(event.x, event.y)
         self.print_point(p_tmp.x, p_tmp.y)
         self.current_graph.points.append(p_tmp)
-        print(f"new point at: {p_tmp}")
+        # print(f"new point at: {p_tmp}")
         self.solution_steps = []
         self.steps_idx = 0
 
@@ -229,7 +229,7 @@ class sc:
         self.clear_canvas()
         self.print_graph(self.solution_steps[self.steps_idx])
 
-        print(self.solution_steps[self.steps_idx].left_vd.CH_points)
+        # print(self.solution_steps[self.steps_idx].left_vd.CH_points)
 
         self.steps_idx += 1
         if self.steps_idx >= len(self.solution_steps):
