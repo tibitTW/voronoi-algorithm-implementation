@@ -1,3 +1,7 @@
+""" $LAN=Python$ """
+
+"""license: copyright of M103040083 李峮驊"""
+
 import copy
 
 CANVAS_SIZE = 600

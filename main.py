@@ -1,9 +1,10 @@
-""" $LAN=Python """
+""" $LAN=Python$ """
+
+"""license: copyright of M103040083 李峮驊"""
 
 import tkinter as tk
 from tkinter import *
 from tkinter import ttk
-from fractions import Fraction
 
 import file_process as fp
 import vd_algo
