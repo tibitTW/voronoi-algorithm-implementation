@@ -1,3 +1,7 @@
+import copy
+
+CANVAS_SIZE = 600
+
 # ===================================== data structure ===================================== #
 class Point:
     def __init__(self, x, y) -> None:
@@ -80,6 +84,10 @@ class Graph:
 
 
 # ===================================== mathematics functions ===================================== #
+def get_squared_p2p_distance(p1: Point, p2: Point) -> float:
+    return (p1.x - p2.x) ** 2 + (p1.y - p2.y) ** 2
+
+
 def get_bisection_line(p1: Point, p2: Point) -> Line:
     center_point = ((p1.x + p2.x) / 2, (p1.y + p2.y) / 2)
     line_vector = (p1.y - p2.y, p2.x - p1.x)
@@ -92,7 +100,7 @@ def get_bisection_line(p1: Point, p2: Point) -> Line:
             center_point[0] + step * line_vector[0],
             center_point[1] + step * line_vector[1],
         )
-        if p_tmp[0] < 0 or p_tmp[0] > 600 or p_tmp[1] < 0 or p_tmp[1] > 600:
+        if p_tmp[0] < 0 or p_tmp[0] > CANVAS_SIZE or p_tmp[1] < 0 or p_tmp[1] > CANVAS_SIZE:
             break
     line_p1 = Point(
         center_point[0] + step * line_vector[0],
@@ -107,7 +115,7 @@ def get_bisection_line(p1: Point, p2: Point) -> Line:
             center_point[0] + step * line_vector[0],
             center_point[1] + step * line_vector[1],
         )
-        if p_tmp[0] < 0 or p_tmp[0] > 600 or p_tmp[1] < 0 or p_tmp[1] > 600:
+        if p_tmp[0] < 0 or p_tmp[0] > CANVAS_SIZE or p_tmp[1] < 0 or p_tmp[1] > CANVAS_SIZE:
             break
     line_p2 = Point(
         center_point[0] + step * line_vector[0],
@@ -121,10 +129,12 @@ def get_concurrent(l1: Line, l2: Line) -> Point:
     n = ((l2.p1.y - l1.p1.y) * (l1.p2.x - l1.p1.x) - (l2.p1.x - l1.p1.x) * (l1.p2.y - l1.p1.y)) / (
         (l2.p2.x - l2.p1.x) * (l1.p2.y - l1.p1.y) - (l2.p2.y - l2.p1.y) * (l1.p2.x - l1.p1.x)
     )
-    return Point(
+    concurrent = Point(
         l2.p1.x + n * (l2.p2.x - l2.p1.x),
         l2.p1.y + n * (l2.p2.y - l2.p1.y),
     )
+
+    return concurrent
 
 
 def get_2_vector_cos(v1: Point, v2: Point):
@@ -141,6 +151,9 @@ def get_vd_steps(point_set):
     steps = []
 
     def merge_vd(left_vd: VD, right_vd: VD) -> VD:
+        left_vd = copy.deepcopy(left_vd)
+        right_vd = copy.deepcopy(right_vd)
+
         result_vd = VD(points=left_vd.points + right_vd.points)
         step_graph = Graph()
 
@@ -253,138 +266,231 @@ def get_vd_steps(point_set):
             right_i_next = len(right_vd.CH_points) - 1
 
         hyperplanes = {}
-        hyperplane_line_tmp = get_bisection_line(
-            left_vd.CH_points[left_top_idx],
-            right_vd.CH_points[right_top_idx],
-        )
+        hyperplane_line_tmp = get_bisection_line(left_vd.CH_points[left_i], right_vd.CH_points[right_i])
+        hyperplane_line_tmp_key = (str(left_vd.CH_points[left_i]), str(right_vd.CH_points[right_i]))
 
         # switch 2 points, makes p1 always upper than p2
-        if hyperplane_line_tmp.p1.y > hyperplane_line_tmp.p2.y:
+        if (hyperplane_line_tmp.p1.y > hyperplane_line_tmp.p2.y) or (
+            (hyperplane_line_tmp.p1.y == hyperplane_line_tmp.p2.y) and (hyperplane_line_tmp.p1.x > hyperplane_line_tmp.p2.x)
+        ):
             hyperplane_line_tmp.p1, hyperplane_line_tmp.p2 = hyperplane_line_tmp.p2, hyperplane_line_tmp.p1
 
-        last_concurrent = Point(-1, -1)
-        left_done = right_done = False
+        last_concurrent = hyperplane_line_tmp.p1
+        has_next_concorrent = True
 
-        while not (left_done and right_done):
+        ii = 0
+        iter_i = 0
+        while has_next_concorrent and iter_i < 50:
+            iter_i += 1
 
-            # find concorrent point between hyperplane & right VD
-            if left_done:
-                print("left done")
-                for key in right_vd.lines:
-                    if (str(right_vd.CH_points[right_i]) in key) and (str(right_vd.CH_points[right_i_next]) in key):
-                        right_line_key = key
-                        break
+            # find left_line & right_line
+            for key in left_vd.lines:
+                if (str(left_vd.CH_points[left_i]) in key) and (str(left_vd.CH_points[left_i_next]) in key):
+                    left_line_key = key
+                    break
+            for key in right_vd.lines:
+                if (str(right_vd.CH_points[right_i]) in key) and (str(right_vd.CH_points[right_i_next]) in key):
+                    right_line_key = key
+                    break
 
-                concurrent = get_concurrent(hyperplane_line_tmp, right_vd.lines[right_line_key])
-                last_concurrent = concurrent
-                hyperplane_line_tmp.p2 = concurrent
-                hyperplanes[(str(hyperplane_line_tmp.p1), str(hyperplane_line_tmp.p2))] = hyperplane_line_tmp
-                hyperplane_line_tmp = get_bisection_line(left_vd.CH_points[left_i], right_vd.CH_points[right_i_next])
+            left_concorrent = get_concurrent(left_vd.lines[left_line_key], hyperplane_line_tmp)
+            right_concorrent = get_concurrent(right_vd.lines[right_line_key], hyperplane_line_tmp)
 
-                # switch 2 points, makes p1 always upper than p2
-                if hyperplane_line_tmp.p1.y > hyperplane_line_tmp.p2.y:
-                    hyperplane_line_tmp.p1, hyperplane_line_tmp.p2 = hyperplane_line_tmp.p2, hyperplane_line_tmp.p1
+            print("last_concorrent:", last_concurrent)
+            print("left_concorrent:", left_concorrent)
+            print("right_concorrent:", right_concorrent)
+            print()
 
-                hyperplane_line_tmp.p1 = concurrent
+            has_left_concorrent = (
+                (0 <= left_concorrent.x <= CANVAS_SIZE) and (0 <= left_concorrent.y <= CANVAS_SIZE) and (last_concurrent.y < left_concorrent.y)
+            )
+            has_right_concorrent = (
+                (0 <= right_concorrent.x <= CANVAS_SIZE) and (0 <= right_concorrent.y <= CANVAS_SIZE) and (last_concurrent.y < right_concorrent.y)
+            )
 
-                # update right_i & right_i_next
-                right_i = right_i_next
-                right_i_next = right_i - 1
-                if right_i_next < 0:
-                    right_i_next = len(right_vd.CH_points) - 1
+            print("has_left_concorrent:", has_left_concorrent)
+            print("has_right_concorrent:", has_right_concorrent)
+            print()
 
-            # find concorrent point between hyperplane & left VD
-            elif right_done:
-                print("right done")
-                for key in left_vd.lines:
-                    if (str(left_vd.CH_points[left_i]) in key) and (str(left_vd.CH_points[left_i_next]) in key):
-                        left_line_key = key
-                        break
+            if (not has_left_concorrent) and (not has_right_concorrent):
+                print("do none")
+                has_next_concorrent = False
+            elif has_left_concorrent and has_right_concorrent:
+                squared_left_distance = get_squared_p2p_distance(last_concurrent, left_concorrent)
+                squared_right_distance = get_squared_p2p_distance(last_concurrent, right_concorrent)
 
-                concurrent = get_concurrent(hyperplane_line_tmp, left_vd.lines[left_line_key])
-                last_concurrent = concurrent
-                hyperplane_line_tmp.p2 = concurrent
-                hyperplanes[(str(hyperplane_line_tmp.p1), str(hyperplane_line_tmp.p2))] = hyperplane_line_tmp
-                hyperplane_line_tmp = get_bisection_line(right_vd.CH_points[right_i], left_vd.CH_points[left_i_next])
+                print("squared_left_distance:", squared_left_distance)
+                print("squared_right_distance:", squared_right_distance)
 
-                # switch 2 points, makes p1 always upper than p2
-                if hyperplane_line_tmp.p1.y > hyperplane_line_tmp.p2.y:
-                    hyperplane_line_tmp.p1, hyperplane_line_tmp.p2 = hyperplane_line_tmp.p2, hyperplane_line_tmp.p1
+                if squared_left_distance < squared_right_distance:
+                    print("shorter is left")
+                    print()
+                    # update last_concorrent
+                    last_concurrent = left_concorrent
 
-                hyperplane_line_tmp.p1 = concurrent
+                    # 切 hyperplane
+                    hyperplane_line_tmp.p2 = left_concorrent
 
-                # update left_i & left_i_next
-                left_i = left_i_next
-                left_i_next = left_i + 1
-                if left_i_next >= len(left_vd.CH_points):
-                    left_i_next = 0
+                    # 存 hyperplane
+                    hyperplanes[hyperplane_line_tmp_key] = hyperplane_line_tmp
 
-            # compare left concorrent point & right concorrent point
-            else:
-                print("comparing left & right")
-                for key in left_vd.lines:
-                    if (str(left_vd.CH_points[left_i]) in key) and (str(left_vd.CH_points[left_i_next]) in key):
-                        left_line_key = key
-                        break
+                    # 找下一條 hyperplnae
+                    hyperplane_line_tmp = get_bisection_line(left_vd.CH_points[left_i_next], right_vd.CH_points[right_i])
+                    hyperplane_line_tmp_key = (str(left_vd.CH_points[left_i_next]), str(right_vd.CH_points[right_i]))
 
-                for key in right_vd.lines:
-                    if (str(right_vd.CH_points[right_i]) in key) and (str(right_vd.CH_points[right_i_next]) in key):
-                        right_line_key = key
-                        break
+                    # cut left line
+                    left_line = left_vd.lines[left_line_key]
+                    if left_line.p1.x > left_line.p2.x:
+                        left_line.p1, left_line.p2 = left_line.p2, left_line.p1
+                    left_line.p2 = left_concorrent
 
-                left_concurrent = get_concurrent(hyperplane_line_tmp, left_vd.lines[left_line_key])
-                right_concurrent = get_concurrent(hyperplane_line_tmp, right_vd.lines[right_line_key])
+                    # update cutted left line
+                    left_vd.lines[left_line_key] = left_line
 
-                if left_concurrent.y < right_concurrent.y:
-                    print("use left")
-                    hyperplane_line_tmp.p2 = left_concurrent
-                    last_concurrent = left_concurrent
-
-                    hyperplanes[(str(hyperplane_line_tmp.p1), str(hyperplane_line_tmp.p2))] = hyperplane_line_tmp
-                    hyperplane_line_tmp = get_bisection_line(right_vd.CH_points[right_i], left_vd.CH_points[left_i_next])
-
-                    # switch 2 points, makes p1 always upper than p2
-                    if hyperplane_line_tmp.p1.y > hyperplane_line_tmp.p2.y:
-                        hyperplane_line_tmp.p1, hyperplane_line_tmp.p2 = hyperplane_line_tmp.p2, hyperplane_line_tmp.p1
-
-                    hyperplane_line_tmp.p1 = left_concurrent
-
-                    # update left_i & left_i_next
+                    # update left idx
                     left_i = left_i_next
-                    left_i_next = left_i + 1
+                    left_i_next += 1
                     if left_i_next >= len(left_vd.CH_points):
                         left_i_next = 0
 
-                else:
-                    print("use right")
-                    hyperplane_line_tmp.p2 = right_concurrent
-                    last_concurrent = right_concurrent
+                elif squared_left_distance > squared_right_distance:
+                    print("shorter is right")
+                    print()
+                    # update last_concorrent
+                    last_concurrent = right_concorrent
 
-                    hyperplanes[(str(hyperplane_line_tmp.p1), str(hyperplane_line_tmp.p2))] = hyperplane_line_tmp
+                    # 切 hyperplane
+                    hyperplane_line_tmp.p2 = right_concorrent
+
+                    # 存 hyperplane
+                    hyperplanes[hyperplane_line_tmp_key] = hyperplane_line_tmp
+
+                    # 找下一條 hyperplnae
                     hyperplane_line_tmp = get_bisection_line(left_vd.CH_points[left_i], right_vd.CH_points[right_i_next])
+                    hyperplane_line_tmp_key = (str(left_vd.CH_points[left_i]), str(right_vd.CH_points[right_i_next]))
 
-                    # switch 2 points, makes p1 always upper than p2
-                    if hyperplane_line_tmp.p1.y > hyperplane_line_tmp.p2.y:
-                        hyperplane_line_tmp.p1, hyperplane_line_tmp.p2 = hyperplane_line_tmp.p2, hyperplane_line_tmp.p1
+                    # cut right line
+                    right_line = right_vd.lines[right_line_key]
+                    if right_line.p1.x > right_line.p2.x:
+                        right_line.p1, right_line.p2 = right_line.p2, right_line.p1
+                    right_line.p1 = right_concorrent
 
-                    hyperplane_line_tmp.p1 = right_concurrent
+                    # update cutted right line
+                    right_vd.lines[right_line_key] = right_line
 
-                    # update right_i & right_i_next
+                    # update right idx
                     right_i = right_i_next
-                    right_i_next = right_i - 1
+                    right_i_next -= 1
                     if right_i_next < 0:
                         right_i_next = len(right_vd.CH_points) - 1
 
-            # print("left_i:", left_i)
-            # print("left_bottom_idx:", left_bottom_idx)
-            # print("right_i:", right_i)
-            # print("right_bottom_idx:", right_bottom_idx)
+                else:
+                    hyperplane_line_tmp.p2 = left_concorrent
+                    hyperplanes[(*hyperplane_line_tmp_key, ii)] = hyperplane_line_tmp
+                    ii += 1
 
-            # update loop controller
-            if left_i == left_bottom_idx:
-                left_done = True
-            if right_i == right_bottom_idx:
-                right_done = True
+                    hyperplane_line_tmp = get_bisection_line(
+                        left_vd.CH_points[left_i_next],
+                        right_vd.CH_points[right_i_next],
+                    )
+
+                    last_concurrent = left_concorrent
+
+                    # cut left line
+                    left_line = left_vd.lines[left_line_key]
+                    if left_line.p1.x > left_line.p2.x:
+                        left_line.p1, left_line.p2 = left_line.p2, left_line.p1
+                    left_line.p2 = left_concorrent
+                    left_vd.lines[left_line_key] = left_line
+
+                    # update left idx
+                    left_i = left_i_next
+                    left_i_next += 1
+                    if left_i_next >= len(left_vd.CH_points):
+                        left_i_next = 0
+
+                    # cut right line
+                    right_line = right_vd.lines[right_line_key]
+                    if right_line.p1.x > right_line.p2.x:
+                        right_line.p1, right_line.p2 = right_line.p2, right_line.p1
+                    right_line.p1 = right_concorrent
+                    right_vd.lines[right_line_key] = right_line
+
+                    # update right idx
+                    right_i = right_i_next
+                    right_i_next -= 1
+                    if right_i_next < 0:
+                        right_i_next = len(right_vd.CH_points) - 1
+
+            elif has_left_concorrent:
+                print("left")
+                print()
+                # update last_concorrent
+                last_concurrent = left_concorrent
+
+                # 切 hyperplane
+                hyperplane_line_tmp.p2 = left_concorrent
+
+                # 存 hyperplane
+                hyperplanes[hyperplane_line_tmp_key] = hyperplane_line_tmp
+
+                # 找下一條 hyperplnae
+                hyperplane_line_tmp = get_bisection_line(left_vd.CH_points[left_i_next], right_vd.CH_points[right_i])
+                hyperplane_line_tmp_key = (str(left_vd.CH_points[left_i_next]), str(right_vd.CH_points[right_i]))
+
+                # cut left line
+                left_line = left_vd.lines[left_line_key]
+                if left_line.p1.x > left_line.p2.x:
+                    left_line.p1, left_line.p2 = left_line.p2, left_line.p1
+                left_line.p2 = left_concorrent
+
+                # update cutted left line
+                left_vd.lines[left_line_key] = left_line
+
+                # update left idx
+                left_i = left_i_next
+                left_i_next += 1
+                if left_i_next >= len(left_vd.CH_points):
+                    left_i_next = 0
+
+            elif has_right_concorrent:
+                print("right")
+                print()
+                # update last_concorrent
+                last_concurrent = right_concorrent
+
+                # 切 hyperplane
+                hyperplane_line_tmp.p2 = right_concorrent
+
+                # 存 hyperplane
+                hyperplanes[hyperplane_line_tmp_key] = hyperplane_line_tmp
+
+                # 找下一條 hyperplnae
+                hyperplane_line_tmp = get_bisection_line(left_vd.CH_points[left_i], right_vd.CH_points[right_i_next])
+                hyperplane_line_tmp_key = (str(left_vd.CH_points[left_i]), str(right_vd.CH_points[right_i_next]))
+
+                # cut right line
+                right_line = right_vd.lines[right_line_key]
+                if right_line.p1.x > right_line.p2.x:
+                    right_line.p1, right_line.p2 = right_line.p2, right_line.p1
+                right_line.p1 = right_concorrent
+
+                # update cutted right line
+                right_vd.lines[right_line_key] = right_line
+
+                # update right idx
+                right_i = right_i_next
+                right_i_next -= 1
+                if right_i_next < 0:
+                    right_i_next = len(right_vd.CH_points) - 1
+
+            # switch 2 points, makes p1 always upper than p2
+            if (hyperplane_line_tmp.p1.y > hyperplane_line_tmp.p2.y) or (
+                (hyperplane_line_tmp.p1.y == hyperplane_line_tmp.p2.y) and (hyperplane_line_tmp.p1.x > hyperplane_line_tmp.p2.x)
+            ):
+                hyperplane_line_tmp.p1, hyperplane_line_tmp.p2 = hyperplane_line_tmp.p2, hyperplane_line_tmp.p1
+
+            hyperplane_line_tmp.p1 = last_concurrent
 
         hyperplane_line_tmp = get_bisection_line(left_vd.CH_points[left_bottom_idx], right_vd.CH_points[right_bottom_idx])
         # switch 2 points, makes p1 always upper than p2
@@ -392,7 +498,7 @@ def get_vd_steps(point_set):
             hyperplane_line_tmp.p1, hyperplane_line_tmp.p2 = hyperplane_line_tmp.p2, hyperplane_line_tmp.p1
 
         hyperplane_line_tmp.p1 = last_concurrent
-        hyperplanes[(str(hyperplane_line_tmp.p1), str(hyperplane_line_tmp.p2))] = hyperplane_line_tmp
+        hyperplanes[hyperplane_line_tmp_key] = hyperplane_line_tmp
 
         # =============================== output results =============================== #
         step_graph.left_vd = left_vd
@@ -401,7 +507,7 @@ def get_vd_steps(point_set):
 
         steps.append(step_graph)
 
-        result_vd.lines = {**result_vd.lines, **hyperplanes}
+        result_vd.lines = {**left_vd.lines, **right_vd.lines, **result_vd.lines, **hyperplanes}
 
         # update convex hull points of result voronoi diagram
         result_vd.CH_points = []
@@ -415,6 +521,11 @@ def get_vd_steps(point_set):
 
         step_graph = Graph(left_vd=result_vd)
         steps.append(step_graph)
+
+        print()
+        print("------------------------------------------")
+        print()
+
         return result_vd
 
     def do_vd(point_set: list) -> VD:
@@ -498,7 +609,7 @@ def get_vd_steps(point_set):
 
             # = = = = = = = = = = = = 鈍角三角形且外心超出畫面，只要畫兩條線 = = = = = = = = = = = = #
             if (sum(squared_triangle_edges) // max(squared_triangle_edges) < 2) and (
-                outer_center.x > 600 or outer_center.x < 0 or outer_center.y > 600 or outer_center.y < 0
+                outer_center.x > CANVAS_SIZE or outer_center.x < 0 or outer_center.y > CANVAS_SIZE or outer_center.y < 0
             ):
                 result_vd = VD(points=point_set)
                 step_graph = Graph(points=point_set)
