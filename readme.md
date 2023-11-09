@@ -1,4 +1,6 @@
-# Voronoi Diagram
+# Voronoi Diagram Implementation
+
+Voronoi diagram implementation on class "Design and Analysis of Algorithms" at NSYSU, 2023.
 
 ## System requirements
 
